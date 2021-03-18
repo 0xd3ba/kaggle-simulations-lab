@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 
 # Custom module imports related to creating the subcomponents of the GUI and their functioning
 import config.envConfig as ecfg
-import gui.windowWidgets as wdw
+import config.windowConfig as wdw
 
 from gui.dialogWidgets import TrainingDialog
 from gui.algoWidget import AlgoWidget

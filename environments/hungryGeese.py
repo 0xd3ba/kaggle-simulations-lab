@@ -3,9 +3,10 @@
 
 from environments.baseEnvironment import BaseEnvironment
 
-HUNGRY_GEESE_TITLE = "Hungry Geese - Don't. Stop. Eating."
-HUNGRY_GEESE_LINK  = "https://www.kaggle.com/c/hungry-geese"
-HUNGRY_GEESE_INFO  = [
+HUNGRY_GEESE_TITLE    = "Hungry Geese"
+HUNGRY_GEESE_SUBTITLE = "Dont. Stop. Eating."
+HUNGRY_GEESE_LINK     = "https://www.kaggle.com/c/hungry-geese"
+HUNGRY_GEESE_INFO     = [
     """
     Whether it be in an arcade, on a phone, as an app, on a computer, or maybe stumbled upon in a web search, many 
     of us have likely developed fond memories playing a version of Snake. It’s addicting to control a slithering 
@@ -33,5 +34,6 @@ class HungryGeese(BaseEnvironment):
 
     def __init__(self):
         self.environmentName = HUNGRY_GEESE_TITLE
+        self.environmentSubtitle = HUNGRY_GEESE_SUBTITLE
         self.competitionLink = HUNGRY_GEESE_LINK
         self.description = self.buildDescription(HUNGRY_GEESE_INFO)

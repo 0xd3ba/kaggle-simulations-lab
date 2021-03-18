@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
 
 # Custom module imports
 import config.algoConfig as acfg               # Module containing algorithm configuration information
-import gui.windowWidgets as winw            # Module containing window configuration information
+import config.windowConfig as winw             # Module containing window configuration information
 
 
 # Constants for dialog titles
@@ -31,7 +31,6 @@ LAYER_CONFIG_MAX_UNITS    = 2048
 # Constants for GUI buttons
 GUI_BUTTON_CANCEL = 'Cancel'
 GUI_BUTTON_CLOSE  = 'Close'
-
 
 
 class LayerConfigDialog(QDialog):

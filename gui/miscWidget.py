@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
 # Custom module imports
 import config.algoConfig as acfg                   # Algorithm specific configuration information
 import config.envConfig as ecfg                    # Environment configuration information
+import environments.baseEnvironment as baseenv     # Custom Base environment
 
 
 # Placeholder text constants
@@ -28,37 +29,14 @@ GUI_BUTTON_WORKSPACE = 'Change Workspace'
 GUI_SELECT_WORKSPACE = 'Select Workspace'
 
 
-# Text that displays the information about the competition
-GUI_TEXT_BOX_TEXT = """
-<html><head/><body>
-
-<p align="center"> <a href="https://www.kaggle.com/c/hungry-geese"> <span style=" font-size:16pt; font-weight:600; 
-color:#0000ff;">Hungry Geese: Don't. Stop. Eating.<br/></span></a></p>
-
-<p>Whether it be in an arcade, on a phone, as an app, on a computer, or maybe stumbled upon in a web search, many of us 
-have likely developed fond memories playing a version of Snake. It’s addicting to control a slithering serpent and watch 
-it grow along the grid until you make one… wrong… move. Then you have to try again because surely you won’t make the 
-same mistake twice!</p>
-
-<p>With Hungry Geese, Kaggle has taken this classic in the video game industry and put a multi-player, simulation spin 
-to it. You will create an AI agent to play against others and survive the longest. You must make sure your goose doesn’t 
-starve or run into other geese; it’s a good thing that geese love peppers, donuts, and pizza—which show up across the 
-board. </p>
-
-<p> Extensive research exists in building Snake models using reinforcement learning, Q-learning, neural networks, and 
-more (maybe you’ll use… Python?). Take your grid-based reinforcement learning knowledge to the next level with this 
-exciting new challenge! </p>
-</body></html>
-"""
-
-
 class MiscWidget(QWidget):
     """ Class responsible for building the misc. information subcomponent of the GUI """
     def __init__(self, parent, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.parent = parent
-        self.envList = ecfg.ENV_LIST
+        self.envMap = ecfg.ENV_MAP
+        self._baseEnv = baseenv.BaseEnvironment()
 
         self.mainLayout = QGridLayout(self)
         self.fileDialog = QFileDialog(parent)
@@ -78,7 +56,9 @@ class MiscWidget(QWidget):
     def createTextBox(self):
         """ Creates the textbox widget and fills it with the text """
         self.textBrowser = QTextBrowser()
-        self.textBrowser.setText(GUI_TEXT_BOX_TEXT)
+
+        self.textBrowser.setOpenExternalLinks(True)
+        self.textBrowser.setText(self._baseEnv.getDescription())
 
         self.mainLayout.addWidget(self.textBrowser, 1, 0, 1, 4)
 
@@ -88,7 +68,7 @@ class MiscWidget(QWidget):
         self.envListBox = QComboBox()
 
         self.envListBox.addItem(PLACEHOLDER_ENV_BOX)
-        for env in self.envList:
+        for env in self.envMap.keys():
             self.envListBox.addItem(env)
 
         # Connect it to the event handler for enabling/disabling Start button
@@ -124,9 +104,10 @@ class MiscWidget(QWidget):
         """ Handle the event when environment is changed """
         if selectedEnv == PLACEHOLDER_ENV_BOX:
             selectedEnv = None
+            self.textBrowser.setText(self._baseEnv.getDescription())    # Reset the textbox with default description
         else:
-            # TODO: Update the text box with the environment information
-            pass
+            # Update the textbox with the description of the environment
+            self.textBrowser.setText(self.envMap[selectedEnv]().getDescription())
 
         self.parent.algoWidget.algoConfig.setEnvironment(selectedEnv)
         self.parent.startButtonEnablerDisabler()
