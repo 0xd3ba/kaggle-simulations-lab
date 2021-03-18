@@ -134,7 +134,7 @@ class LayerConfigDialog(QDialog):
 class TrainingDialog(QDialog):
     """ Class responsible for creating the (animated) algorithm training dialog """
 
-    def __init__(self, mainParent, *args, **kwargs):
+    def __init__(self, mainParent, config, *args, **kwargs):
         super().__init__(mainParent)
 
         self.setWindowTitle(DIALOG_TITLE_TRAINING)
@@ -142,9 +142,10 @@ class TrainingDialog(QDialog):
         self.setMaximumWidth(winw.GUI_WDW_MAX_WIDTH)
 
         self.parent = mainParent                    # Store a reference to the main parent widget
+        self.config = config                        # The configuration information for the current training session
         self.mainLayout = QGridLayout()             # Create the main layout for this window -- Grid Layout
 
-        self.createAlgoInfoTextBox()                # Textbox corresponding to displaying current algorithm config.
+        self.createConfigInfoTextBox()               # Textbox corresponding to displaying current algorithm config.
         self.createTrainingInfoTextBox()            # Textbox corresponding to displaying tensorboard links and all
         self.createProgressBar()                    # Progress bar to track the training progress so far
         self.createOptionButtons()                  # Option buttons to cancel the training
@@ -152,10 +153,16 @@ class TrainingDialog(QDialog):
         self.setLayout(self.mainLayout)
 
 
-    def createAlgoInfoTextBox(self):
+    def _writeConfigInfo(self):
+        """ Writes the configuration information to the left text box """
+        #TODO: Write the confifuration information
+        pass
+
+
+    def createConfigInfoTextBox(self):
         """ Creates the textbox widget that displays the algorithm training information """
         self.algoInfoTextBox = QTextBrowser()
-        # self.algoInfoTextBox.setText('')
+        self._writeConfigInfo()
 
         self.mainLayout.addWidget(self.algoInfoTextBox, 0, 0, 1, 2)
 

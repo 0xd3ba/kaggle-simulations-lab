@@ -85,7 +85,13 @@ class KaggleSimLabUI(QMainWindow):
     def startButtonEventHandler(self):
         """ Event handler for the 'Start' button. Creates a new dialog and starts the training loop """
 
-        self.trainDialog = TrainingDialog(self)
+        # First bundle the configuration data of the algorithm
+        # Then update the None values (happens when events are not triggered) with their defaults
+        configData = self.algoWidget.algoConfig.getConfigData()
+        configData = self.algoWidget.algoConfig.checkAndUpdateConfigData(configData)
+        print(configData)
+
+        self.trainDialog = TrainingDialog(self, configData)
         self.trainDialog.exec_()
 
         # Execution of the main widget pauses until the dialog is closed

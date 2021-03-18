@@ -1,6 +1,12 @@
-# Kaggle Simulations Lab
-Build and experiment with a wide variety of *Reinforcement-Learning* agents for various 
-[Kaggle Simulation](https://www.kaggle.com/simulations) competitions, EASILY !
+# Kaggle Simulations Lab 🛠
+Build and experiment with a wide variety of deep Reinforcement Learning agents for various 
+[Kaggle Simulation](https://www.kaggle.com/simulations) competitions, *with only a few clicks* !
+
+All you have to do is:
+- Choose your environment
+- Choose your algorithm
+- Configure your Neural-Network
+- Train your agent 😎
 
 ### Environments Supported
 

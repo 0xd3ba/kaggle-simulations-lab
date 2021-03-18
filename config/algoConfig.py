@@ -7,6 +7,7 @@ from agents.deepQNetwork       import DeepQNetwork
 from agents.doubleDeepQNetwork import DoubleDeepQNetwork
 from agents.reinforce          import REINFORCE
 
+
 # List of algorithms supported
 # Supporting a new algorithm only needs an entry added into this.
 ALGO_LIST = [
@@ -64,6 +65,15 @@ KEY_NUM_EPOCHS  = 'num_epochs'
 KEY_UPDATE_INT  = 'update_interval'
 KEY_UNITS_LIST  = 'units_list'
 KEY_ACTIV_LIST  = 'activations_list'
+
+
+# Default configuration values
+ALGO_DEF_LEARN_RATE = 0.01
+ALGO_DEF_NUM_LAYERS = 2
+ALGO_DEF_NUM_EPOCHS = 10
+ALGO_DEF_UPDATE_INT = 2
+ALGO_DEF_NUM_UNITS  = 32
+ALGO_DEF_ACTIVATION = 'ReLU'
 
 
 class AlgoConfig:
@@ -163,3 +173,26 @@ class AlgoConfig:
             KEY_ACTIV_LIST:  actvsList
         }
         return config_data
+
+
+    def checkAndUpdateConfigData(self, configData):
+        """ Checks the values of the given configuration data and fills with defaults wherever applicable """
+
+        if configData[KEY_NUM_LAYERS] is None:
+            configData[KEY_NUM_LAYERS] = ALGO_DEF_NUM_LAYERS
+
+        if configData[KEY_NUM_EPOCHS] is None:
+            configData[KEY_NUM_EPOCHS] = ALGO_DEF_NUM_EPOCHS
+
+        if configData[KEY_LEARN_RATE] is None:
+            configData[KEY_LEARN_RATE] = ALGO_DEF_LEARN_RATE
+
+        if configData[KEY_UPDATE_INT] is None:
+            configData[KEY_UPDATE_INT] = ALGO_DEF_UPDATE_INT
+
+        numLayers = configData[KEY_NUM_LAYERS]
+        if configData[KEY_UNITS_LIST] is None:
+            configData[KEY_UNITS_LIST] = [ALGO_DEF_NUM_UNITS] * numLayers
+            configData[KEY_ACTIV_LIST] = [ALGO_DEF_ACTIVATION] * numLayers
+
+        return configData
