@@ -117,3 +117,6 @@ class MiscWidget(QWidget):
         """ Creates a directory selection dialog for the user to change the workspace """
         filepath = self.fileDialog.getExistingDirectory(caption=GUI_SELECT_WORKSPACE)
         self.currWorkspaceBox.setText(str(filepath))
+
+        # Update the workspace path
+        self.parent.algoWidget.algoConfig.setWorkspace(filepath)

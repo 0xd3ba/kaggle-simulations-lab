@@ -2,7 +2,7 @@
 
 # Constants related to the default value description textbox
 DEF_ENV_TITLE    = "Kaggle Simulations Lab"
-DEF_ENV_SUBTITLE = "Building Agents Made Simple"
+DEF_ENV_SUBTITLE = "Build. Train. Compete."
 DEF_ENV_LINK     = "https://github.com/0xd3ba/kaggle-simulations-lab"
 DEF_ENV_INFO     = [
     """

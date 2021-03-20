@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDialogButtonBox,
     QTextBrowser,
-    QProgressBar
+    QProgressBar,
+    QMessageBox
 )
 
 # Custom module imports
@@ -20,6 +21,10 @@ import config.windowConfig as winw             # Module containing window config
 # Constants for dialog titles
 DIALOG_TITLE_LAYER_CFG = 'Configure the Hidden Layers'
 DIALOG_TITLE_TRAINING  = 'Training the agent ...'
+DIALOG_TITLE_ERROR_MSG = 'Error(s) have occurred'
+
+# Constant for dialog textbox
+DIALOG_TEXTBOX_TRAIN_CONFIG = 'Starting TensorBoard server ...'
 
 # Constants for LayerConfigDialog
 LAYER_CONFIG_NUNITS_LABEL = 'Number of Units'
@@ -31,6 +36,24 @@ LAYER_CONFIG_MAX_UNITS    = 2048
 # Constants for GUI buttons
 GUI_BUTTON_CANCEL = 'Cancel'
 GUI_BUTTON_CLOSE  = 'Close'
+
+
+class ErrorDialog(QMessageBox):
+    """ Class for displaying error messages, if any """
+
+    def __init__(self, parent, messageList):
+        super().__init__(parent)
+
+        self.setWindowTitle(DIALOG_TITLE_ERROR_MSG)
+        self.setStandardButtons(QMessageBox.Ok)         # Only OK button is needed
+        self.setIcon(QMessageBox.Critical)              # Set the icon to critical icon
+
+        # Order the messages in the list and combine them to a single string
+        messages = [f'{i+1}. {msg}' for i, msg in enumerate(messageList)]
+        messages = '\n\n'.join(messages)
+
+        # Finally set the message on the dialog
+        self.setText(messages)
 
 
 class LayerConfigDialog(QDialog):
@@ -163,8 +186,9 @@ class TrainingDialog(QDialog):
             None,                   # 4. Number of layers
             None,                   # 5. Layer configuration (units per-layer and activations)
             None,                   # 6. Optimizer that is being used
-            None,                   # 7. Number of training epochs
-            None,                   # 8. How often is the best model updated, i.e. model update interval
+            None,                   # 7. Learning rate
+            None,                   # 8. Number of training epochs
+            None,                   # 9. How often is the best model updated, i.e. model update interval
             '</body></html>'        # Closing tag
         ]
 
@@ -178,8 +202,9 @@ class TrainingDialog(QDialog):
         ]) + '<p></p>'
 
         fmt_config[6] = f'<p> <b>Optimizer: </b> {self.config[acfg.KEY_OPTIM]} </p>'
-        fmt_config[7] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPOCHS]} </p>'
-        fmt_config[8] = f'<p> <b>Update Interval: </b> {self.config[acfg.KEY_UPDATE_INT]} </p>'
+        fmt_config[7] = f'<p> <b>Learning Rate: </b> {self.config[acfg.KEY_LEARN_RATE]} </p>'
+        fmt_config[8] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPOCHS]} </p>'
+        fmt_config[9] = f'<p> <b>Update Interval: </b> {self.config[acfg.KEY_UPDATE_INT]} </p>'
 
         fmt_config_str = '\n'.join(fmt_config)
         self.configInfoTextBox.setText(fmt_config_str)
@@ -196,7 +221,8 @@ class TrainingDialog(QDialog):
     def createTrainingInfoTextBox(self):
         """ Creates the textbox widget that displays the statistics of the training """
         self.trainingInfoTextBox = QTextBrowser()
-        # self.trainingInfoTextBox.setText('')
+        self.trainingInfoTextBox.setText(DIALOG_TEXTBOX_TRAIN_CONFIG)
+        self.trainingInfoTextBox.setOpenExternalLinks(True)
 
         self.mainLayout.addWidget(self.trainingInfoTextBox, 0, 2, 1, 2)
 
