@@ -155,16 +155,42 @@ class TrainingDialog(QDialog):
 
     def _writeConfigInfo(self):
         """ Writes the configuration information to the left text box """
-        #TODO: Write the confifuration information
-        pass
+        fmt_config = [
+            '<html><head/><body>',  # Opening tag
+            None,                   # 1. Workspace directory
+            None,                   # 2. The title of the competition
+            None,                   # 3. Algorithm that is being used
+            None,                   # 4. Number of layers
+            None,                   # 5. Layer configuration (units per-layer and activations)
+            None,                   # 6. Optimizer that is being used
+            None,                   # 7. Number of training epochs
+            None,                   # 8. How often is the best model updated, i.e. model update interval
+            '</body></html>'        # Closing tag
+        ]
+
+        fmt_config[1] = f'<p> <b>Workspace: </b> {self.config[acfg.KEY_WORKSPACE]} </p>'
+        fmt_config[2] = f'<p> <b>Environment: </b> {self.config[acfg.KEY_ENVIRONMENT]} </p>'
+        fmt_config[3] = f'<p> <b>Algorithm: </b> {self.config[acfg.KEY_ALGO]} </p>'
+        fmt_config[4] = f'<p> <b>Number of (hidden) Layers: </b> {self.config[acfg.KEY_NUM_LAYERS]} </p>'
+        fmt_config[5] = '\n'.join([
+            f'({units}, {activ}) <br/>' for units, activ in zip(self.config[acfg.KEY_UNITS_LIST],
+                                                                self.config[acfg.KEY_ACTIV_LIST])
+        ]) + '<p></p>'
+
+        fmt_config[6] = f'<p> <b>Optimizer: </b> {self.config[acfg.KEY_OPTIM]} </p>'
+        fmt_config[7] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPOCHS]} </p>'
+        fmt_config[8] = f'<p> <b>Update Interval: </b> {self.config[acfg.KEY_UPDATE_INT]} </p>'
+
+        fmt_config_str = '\n'.join(fmt_config)
+        self.configInfoTextBox.setText(fmt_config_str)
 
 
     def createConfigInfoTextBox(self):
         """ Creates the textbox widget that displays the algorithm training information """
-        self.algoInfoTextBox = QTextBrowser()
+        self.configInfoTextBox = QTextBrowser()
         self._writeConfigInfo()
 
-        self.mainLayout.addWidget(self.algoInfoTextBox, 0, 0, 1, 2)
+        self.mainLayout.addWidget(self.configInfoTextBox, 0, 0, 1, 2)
 
 
     def createTrainingInfoTextBox(self):

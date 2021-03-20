@@ -25,4 +25,3 @@ GUI_WDW_MAX_WIDTH  = 540
 GUI_WDW_MAX_HEIGHT = 900
 
 GUI_TITLE_MAIN = 'Kaggle Simulations Lab'
-
