@@ -145,7 +145,7 @@ class TrainingDialog(QDialog):
         self.config = config                        # The configuration information for the current training session
         self.mainLayout = QGridLayout()             # Create the main layout for this window -- Grid Layout
 
-        self.createConfigInfoTextBox()               # Textbox corresponding to displaying current algorithm config.
+        self.createConfigInfoTextBox()              # Textbox corresponding to displaying current algorithm config.
         self.createTrainingInfoTextBox()            # Textbox corresponding to displaying tensorboard links and all
         self.createProgressBar()                    # Progress bar to track the training progress so far
         self.createOptionButtons()                  # Option buttons to cancel the training

@@ -1,6 +1,9 @@
 # This module contains the class that stores the algorithm specific information
 # depending on the user's choice
 
+import os
+
+# Custom algorithm imports
 from agents.a2c                import A2C
 from agents.a3c                import A3C
 from agents.deepQNetwork       import DeepQNetwork
@@ -65,6 +68,7 @@ KEY_NUM_EPOCHS  = 'num_epochs'
 KEY_UPDATE_INT  = 'update_interval'
 KEY_UNITS_LIST  = 'units_list'
 KEY_ACTIV_LIST  = 'activations_list'
+KEY_WORKSPACE   = 'workspace'
 
 
 # Default configuration values
@@ -89,6 +93,7 @@ class AlgoConfig:
         self.numEpochs = None
         self.uInterval = None
         self.layerList = None
+        self.workspace = None
 
     # *****************************************
     # Setter methods for the instance variables
@@ -120,6 +125,10 @@ class AlgoConfig:
             self.layerList = None
         else:
             self.layerList = [(u,a) for u,a in zip(units, activations)]
+
+
+    def setWorkspace(self, workspace):
+        self.workspace = workspace
 
 
     # *****************************************
@@ -158,6 +167,10 @@ class AlgoConfig:
         return (unitsList, actvsList)
 
 
+    def getWorkspace(self):
+        return self.workspace
+
+
     def getConfigData(self):
         """ Packing method that packs all the data obtained so far as a dictionary and returns it """
         unitsList, actvsList = self.getLayerList()
@@ -169,6 +182,7 @@ class AlgoConfig:
             KEY_NUM_LAYERS:  self.getNumLayers(),
             KEY_NUM_EPOCHS:  self.getNumEpochs(),
             KEY_UPDATE_INT:  self.getUpdateInterval(),
+            KEY_WORKSPACE:   self.getWorkspace(),
             KEY_UNITS_LIST:  unitsList,
             KEY_ACTIV_LIST:  actvsList
         }
@@ -189,6 +203,9 @@ class AlgoConfig:
 
         if configData[KEY_UPDATE_INT] is None:
             configData[KEY_UPDATE_INT] = ALGO_DEF_UPDATE_INT
+
+        if configData[KEY_WORKSPACE] is None:
+            configData[KEY_WORKSPACE] = os.path.abspath(os.curdir)
 
         numLayers = configData[KEY_NUM_LAYERS]
         if configData[KEY_UNITS_LIST] is None:

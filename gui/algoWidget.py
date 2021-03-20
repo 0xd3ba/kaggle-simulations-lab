@@ -121,6 +121,7 @@ class AlgoWidget(QWidget):
         self.numEpochsBox = QSpinBox()
 
         self.numEpochsBox.setMinimum(1)     # Set the minimum number of training epochs to 1
+        self.numEpochsBox.setMaximum(1e8)   # Set the maximum number of training epochs
 
         # Connect the handler for change in epochs value
         self.numEpochsBox.valueChanged.connect(self.numEpochsHandler)

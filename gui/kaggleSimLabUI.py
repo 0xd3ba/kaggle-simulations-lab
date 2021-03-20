@@ -89,7 +89,6 @@ class KaggleSimLabUI(QMainWindow):
         # Then update the None values (happens when events are not triggered) with their defaults
         configData = self.algoWidget.algoConfig.getConfigData()
         configData = self.algoWidget.algoConfig.checkAndUpdateConfigData(configData)
-        print(configData)
 
         self.trainDialog = TrainingDialog(self, configData)
         self.trainDialog.exec_()
