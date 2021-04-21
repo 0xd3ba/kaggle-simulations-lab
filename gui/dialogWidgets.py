@@ -1,5 +1,7 @@
 # This module contains custom dialog widgets for the GUI
-
+import os
+import pyperclip
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QDialog,
     QGridLayout,
@@ -10,21 +12,30 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QTextBrowser,
     QProgressBar,
-    QMessageBox
+    QMessageBox,
+    QLineEdit,
 )
 
 # Custom module imports
-import config.algoConfig as acfg               # Module containing algorithm configuration information
+import config.algorithmsConfig as acfg         # Module containing algorithm configuration information
 import config.windowConfig as winw             # Module containing window configuration information
-
+import utils.dispatcher as udispatch           # Module containing the dispatcher
 
 # Constants for dialog titles
+import utils.nn
+
 DIALOG_TITLE_LAYER_CFG = 'Configure the Hidden Layers'
 DIALOG_TITLE_TRAINING  = 'Training the agent ...'
 DIALOG_TITLE_ERROR_MSG = 'Error(s) have occurred'
 
 # Constant for dialog textbox
 DIALOG_TEXTBOX_TRAIN_CONFIG = 'Starting TensorBoard server ...'
+
+# Constant for tensorboard
+# The command needs to be appended with the log-directory
+DIALOG_TENSORBOARD_LABEL = 'Execute the command on terminal to start TensorBoard server '
+DIALOG_TENSORBOARD_CMD = 'tensorboard --logdir '
+DIALOG_TENSORBOARD_COPY = 'Copy Command'
 
 # Constants for LayerConfigDialog
 LAYER_CONFIG_NUNITS_LABEL = 'Number of Units'
@@ -66,15 +77,15 @@ class LayerConfigDialog(QDialog):
         self.setMinimumWidth(winw.GUI_WDW_MIN_WIDTH)
         self.setMaximumWidth(winw.GUI_WDW_MAX_WIDTH)
 
-        self.algoWidget = algoWidget        # Store a reference to the algorithm configuration widget
-        self.mainLayout = QGridLayout()     # Create the main layout for this window -- Grid Layout
-        self.lyrUnits = [None] * numLayers  # Create the list to store the number of units in each layer
-        self.lyrActiv = [None] * numLayers  # Create the list to store the activation used in each layer
-        self.activList = acfg.ACTIV_LIST    # Store a reference to the list of activations supported
-        self.numLayers = numLayers          # Store the number of hidden layers
+        self.algoWidget = algoWidget                # Store a reference to the algorithm configuration widget
+        self.mainLayout = QGridLayout()             # Create the main layout for this window -- Grid Layout
+        self.lyrUnits = [None] * numLayers          # Create the list to store the number of units in each layer
+        self.lyrActiv = [None] * numLayers          # Create the list to store the activation used in each layer
+        self.activList = utils.nn.ACTIV_MAP.keys()  # Store a reference to the list of activations supported
+        self.numLayers = numLayers                  # Store the number of hidden layers
 
-        self.createLayerWidgets(numLayers)  # Create the widgets corresponding to the layers and their activations
-        self.createOptionButtons()          # Create the OK/Cancel button for saving the changes
+        self.createLayerWidgets(numLayers)          # Create the widgets corresponding to the layers and their activations
+        self.createOptionButtons()                  # Create the OK/Cancel button for saving the changes
 
         self.setLayout(self.mainLayout)
 
@@ -168,6 +179,7 @@ class TrainingDialog(QDialog):
         self.config = config                        # The configuration information for the current training session
         self.mainLayout = QGridLayout()             # Create the main layout for this window -- Grid Layout
 
+        self.createTensorBoardLinkBox()             # List box corresponding to tensorboard server link
         self.createConfigInfoTextBox()              # Textbox corresponding to displaying current algorithm config.
         self.createTrainingInfoTextBox()            # Textbox corresponding to displaying tensorboard links and all
         self.createProgressBar()                    # Progress bar to track the training progress so far
@@ -203,11 +215,43 @@ class TrainingDialog(QDialog):
 
         fmt_config[6] = f'<p> <b>Optimizer: </b> {self.config[acfg.KEY_OPTIM]} </p>'
         fmt_config[7] = f'<p> <b>Learning Rate: </b> {self.config[acfg.KEY_LEARN_RATE]} </p>'
-        fmt_config[8] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPOCHS]} </p>'
+        fmt_config[8] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPISODES]} </p>'
         fmt_config[9] = f'<p> <b>Update Interval: </b> {self.config[acfg.KEY_UPDATE_INT]} </p>'
 
         fmt_config_str = '\n'.join(fmt_config)
         self.configInfoTextBox.setText(fmt_config_str)
+
+
+    def createTensorBoardLinkBox(self):
+        """ Creates the box that contains the tensorboard server link """
+        workspace_dir = self.config[acfg.KEY_WORKSPACE]
+        log_dir = os.path.join(workspace_dir, udispatch.LOG_DIR)
+        tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir
+
+        # For monospaced font in the command
+        font = QFont()
+        font.setFamily("Monospace")
+        font.setFixedPitch(True)
+
+        # Create the widgets for label and the command
+        self.tboardLabel = QLabel(DIALOG_TENSORBOARD_LABEL)
+        self.tboardCmd = QLineEdit()
+        self.tboardCopyButton = QPushButton(DIALOG_TENSORBOARD_COPY)
+
+        self.tboardCopyButton.clicked.connect(self.tensorBoardCopyCommand)
+
+        # Set the widget to be read-only and update the text with the tensorboard command
+        self.tboardCmd.setReadOnly(True)
+        self.tboardCmd.setPlaceholderText(tboard_cmd)
+        self.tboardCmd.setFont(font)
+
+        # TODO: Add a button for copying the link to clipboard
+
+        # Finally add them to the main layout
+        self.mainLayout.addWidget(self.tboardLabel, 0, 0, 1, 4)
+        self.mainLayout.addWidget(self.tboardCmd, 1, 0, 1, 3)
+        self.mainLayout.addWidget(self.tboardCopyButton, 1, 3, 1, 1)
+
 
 
     def createConfigInfoTextBox(self):
@@ -215,7 +259,7 @@ class TrainingDialog(QDialog):
         self.configInfoTextBox = QTextBrowser()
         self._writeConfigInfo()
 
-        self.mainLayout.addWidget(self.configInfoTextBox, 0, 0, 1, 2)
+        self.mainLayout.addWidget(self.configInfoTextBox, 2, 0, 1, 2)
 
 
     def createTrainingInfoTextBox(self):
@@ -224,13 +268,13 @@ class TrainingDialog(QDialog):
         self.trainingInfoTextBox.setText(DIALOG_TEXTBOX_TRAIN_CONFIG)
         self.trainingInfoTextBox.setOpenExternalLinks(True)
 
-        self.mainLayout.addWidget(self.trainingInfoTextBox, 0, 2, 1, 2)
+        self.mainLayout.addWidget(self.trainingInfoTextBox, 2, 2, 1, 2)
 
 
     def createProgressBar(self):
         """ Creates the progress bar that keeps track of the epochs completed so far """
         self.progressBar = QProgressBar()
-        self.mainLayout.addWidget(self.progressBar, 1, 0, 1, 4)
+        self.mainLayout.addWidget(self.progressBar, 3, 0, 1, 4)
 
 
     def createOptionButtons(self):
@@ -245,8 +289,8 @@ class TrainingDialog(QDialog):
         # When training completes, the cancel button gets disabled
         self.closeBtn.setEnabled(False)
 
-        self.mainLayout.addWidget(self.cancelBtn, 2, 3, 1, 1)
-        self.mainLayout.addWidget(self.closeBtn, 2, 2, 1, 1)
+        self.mainLayout.addWidget(self.cancelBtn, 4, 3, 1, 1)
+        self.mainLayout.addWidget(self.closeBtn, 4, 2, 1, 1)
 
     # *****************************************
     # Below methods contains the control logic
@@ -263,3 +307,7 @@ class TrainingDialog(QDialog):
         """ Stops the algorithm, saves the model, stops tensorboard and closes """
         #TODO: Do the above mentioned stuff
         self.close()
+
+    def tensorBoardCopyCommand(self):
+        """ Copies the provided command of tensorboard into clipboard """
+        pyperclip.copy(self.tboardCmd.text())

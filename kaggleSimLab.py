@@ -2,13 +2,18 @@
 #                           for Kaggle simulation competitions
 
 import sys
-from PyQt5.QtWidgets    import QApplication
+from PyQt5.QtWidgets import QApplication
 
 # Custom module import for GUI of the application
 from gui.kaggleSimLabUI import KaggleSimLabUI
+from config.environmentConfig import registerEnvironments
 
 
 if __name__ == '__main__':
+
+    # The first step is to register supported environments
+    registerEnvironments()
+
     kaggleSimLabApp = QApplication(sys.argv)
     kaggleSimLabGui = KaggleSimLabUI()
 

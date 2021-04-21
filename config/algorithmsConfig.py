@@ -4,11 +4,11 @@
 import os
 
 # Custom algorithm imports
-from agents.a2c                import A2C
+from agents.a2c.a2c import A2C
 from agents.a3c                import A3C
-from agents.deepQNetwork       import DeepQNetwork
-from agents.doubleDeepQNetwork import DoubleDeepQNetwork
-from agents.reinforce          import REINFORCE
+from agents.dqn.deepQNetwork import DeepQNetwork
+from agents.ddqn.doubleDeepQNetwork import DoubleDeepQNetwork
+from agents.reinforce.reinforce import REINFORCE
 
 
 # List of algorithms supported
@@ -24,60 +24,34 @@ ALGO_LIST = [
 # Create the mappings between names of the algorithms and their classes
 ALGO_MAP = {algo.ALGO_NAME: algo for algo in ALGO_LIST}
 
-# List of optimizers supported
-OPTIM_LIST = [
-    'AdaDelta',
-    'Adagrad',
-    'Adam',
-    'AdamW',
-    'SparseAdam',
-    'AdaMax',
-    'ASGD (Averaged SGD)',
-    'RMSProp',
-    'RProp',
-    'SGD'
-]
-
-# List of activations supported
-ACTIV_LIST = [
-    'CELU',
-    'ELU',
-    'GELU',
-    'GLU',
-    'HardTanh',
-    'LeakyReLU',
-    'LogSigmoid',
-    'PReLU',
-    'RReLU',
-    'ReLU',
-    'ReLU6',
-    'SELU',
-    'Sigmoid',
-    'Softmax',
-    'Tanh',
-    'Threshold'
-]
-
 # Keys related to the packing of the algorithm configuration data
-KEY_ALGO        = 'algorithm'
-KEY_OPTIM       = 'optimizer'
-KEY_ENVIRONMENT = 'environment'
-KEY_LEARN_RATE  = 'learning_rate'
-KEY_NUM_LAYERS  = 'num_layers'
-KEY_NUM_EPOCHS  = 'num_epochs'
-KEY_UPDATE_INT  = 'update_interval'
-KEY_UNITS_LIST  = 'units_list'
-KEY_ACTIV_LIST  = 'activations_list'
-KEY_WORKSPACE   = 'workspace'
+KEY_ALGO            = 'algorithm'
+KEY_OPTIM           = 'optimizer'
+KEY_ENVIRONMENT     = 'environment'
+KEY_NUM_AGENTS      = 'num_agents'
+KEY_LEARN_RATE      = 'learning_rate'
+KEY_NUM_LAYERS      = 'num_layers'
+KEY_NUM_EPISODES    = 'num_episodes'
+KEY_NUM_WARMUP      = 'num_warmup_episodes'
+KEY_SELF_PLAY_EP    = 'self_play_ep_per_update'
+KEY_SELF_PLAY_DELTA = 'self_play_delta'
+KEY_UPDATE_INT      = 'checkpoint_interval'
+KEY_UNITS_LIST      = 'units_list'
+KEY_ACTIV_LIST      = 'activations_list'
+KEY_WORKSPACE       = 'workspace'
 
 
 # Default configuration values
-ALGO_DEF_LEARN_RATE = 0.01
-ALGO_DEF_NUM_LAYERS = 2
-ALGO_DEF_NUM_EPOCHS = 10
-ALGO_DEF_UPDATE_INT = 2
-ALGO_DEF_NUM_UNITS  = 32
-ALGO_DEF_ACTIVATION = 'ReLU'
+ALGO_DEF_LEARN_RATE     = 0.01
+ALGO_DEF_NUM_LAYERS     = 2
+ALGO_DEF_NUM_AGENTS     = 2
+ALGO_DEF_NUM_EPISODES   = 10
+ALGO_DEF_NUM_WARMUP     = 0
+ALGO_DEF_UPDATE_INT     = 2
+ALGO_DEF_SPLAY_EPISODES = 10
+ALGO_DEF_SPLAY_DELTA    = 0.01
+ALGO_DEF_NUM_UNITS      = 32
+ALGO_DEF_ACTIVATION     = 'ReLU'
 
 
 class AlgoConfig:
@@ -90,10 +64,14 @@ class AlgoConfig:
         self.optimizer = None
         self.learnRate = None
         self.numLayers = None
-        self.numEpochs = None
+        self.numEpisodes = None
+        self.numWarmup = None
         self.uInterval = None
+        self.splayUpdate = None
+        self.splayDelta = None
         self.layerList = None
         self.workspace = None
+        self.numAgents = None
 
     # *****************************************
     # Setter methods for the instance variables
@@ -105,6 +83,9 @@ class AlgoConfig:
     def setEnvironment(self, env):
         self.environ = env
 
+    def setNumAgents(self, n):
+        self.numAgents = n
+
     def setOptimizer(self, optimizer):
         self.optimizer = optimizer
 
@@ -114,8 +95,17 @@ class AlgoConfig:
     def setNumLayers(self, numLayers):
         self.numLayers = numLayers
 
-    def setNumEpochs(self, numEpochs):
-        self.numEpochs = numEpochs
+    def setNumEpisodes(self, numEpochs):
+        self.numEpisodes = numEpochs
+
+    def setNumWarmupEpisodes(self, numWarmup):
+        self.numWarmup = numWarmup
+
+    def setSelfPlayUpdateEpisodes(self, episodes):
+        self.splayUpdate = episodes
+
+    def setSelfPlayDelta(self, delta):
+        self.splayDelta = delta
 
     def setUpdateInterval(self, uInterval):
         self.uInterval = uInterval
@@ -141,6 +131,9 @@ class AlgoConfig:
     def getEnvironment(self):
         return self.environ
 
+    def getNumAgents(self):
+        return self.numAgents
+
     def getOptimizer(self):
         return self.optimizer
 
@@ -150,8 +143,17 @@ class AlgoConfig:
     def getNumLayers(self):
         return self.numLayers
 
-    def getNumEpochs(self):
-        return self.numEpochs
+    def getNumEpisodes(self):
+        return self.numEpisodes
+
+    def getNumWarmupEpisodes(self):
+        return self.numWarmup
+
+    def getSelfPlayUpdateEpisodes(self):
+        return self.splayUpdate
+
+    def getSelfPlayDelta(self):
+        return self.splayDelta
 
     def getUpdateInterval(self):
         return self.uInterval
@@ -175,16 +177,20 @@ class AlgoConfig:
         """ Packing method that packs all the data obtained so far as a dictionary and returns it """
         unitsList, actvsList = self.getLayerList()
         config_data = {
-            KEY_ALGO:        self.getAlgorithm(),
-            KEY_ENVIRONMENT: self.getEnvironment(),
-            KEY_OPTIM:       self.getOptimizer(),
-            KEY_LEARN_RATE:  self.getLearningRate(),
-            KEY_NUM_LAYERS:  self.getNumLayers(),
-            KEY_NUM_EPOCHS:  self.getNumEpochs(),
-            KEY_UPDATE_INT:  self.getUpdateInterval(),
-            KEY_WORKSPACE:   self.getWorkspace(),
-            KEY_UNITS_LIST:  unitsList,
-            KEY_ACTIV_LIST:  actvsList
+            KEY_ALGO:            self.getAlgorithm(),
+            KEY_ENVIRONMENT:     self.getEnvironment(),
+            KEY_NUM_AGENTS:      self.getNumAgents(),
+            KEY_OPTIM:           self.getOptimizer(),
+            KEY_LEARN_RATE:      self.getLearningRate(),
+            KEY_NUM_LAYERS:      self.getNumLayers(),
+            KEY_NUM_EPISODES:    self.getNumEpisodes(),
+            KEY_NUM_WARMUP:      self.getNumWarmupEpisodes(),
+            KEY_SELF_PLAY_EP:    self.getSelfPlayUpdateEpisodes(),
+            KEY_SELF_PLAY_DELTA: self.getSelfPlayDelta(),
+            KEY_UPDATE_INT:      self.getUpdateInterval(),
+            KEY_WORKSPACE:       self.getWorkspace(),
+            KEY_UNITS_LIST:      unitsList,
+            KEY_ACTIV_LIST:      actvsList
         }
         return config_data
 
@@ -192,17 +198,29 @@ class AlgoConfig:
     def checkAndUpdateConfigData(self, configData):
         """ Checks the values of the given configuration data and fills with defaults wherever applicable """
 
+        if configData[KEY_NUM_AGENTS] is None:
+            configData[KEY_NUM_AGENTS] = ALGO_DEF_NUM_AGENTS
+
         if configData[KEY_NUM_LAYERS] is None:
             configData[KEY_NUM_LAYERS] = ALGO_DEF_NUM_LAYERS
 
-        if configData[KEY_NUM_EPOCHS] is None:
-            configData[KEY_NUM_EPOCHS] = ALGO_DEF_NUM_EPOCHS
+        if configData[KEY_NUM_EPISODES] is None:
+            configData[KEY_NUM_EPISODES] = ALGO_DEF_NUM_EPISODES
+
+        if configData[KEY_NUM_WARMUP] is None:
+            configData[KEY_NUM_EPISODES] = ALGO_DEF_NUM_WARMUP
 
         if configData[KEY_LEARN_RATE] is None:
             configData[KEY_LEARN_RATE] = ALGO_DEF_LEARN_RATE
 
         if configData[KEY_UPDATE_INT] is None:
             configData[KEY_UPDATE_INT] = ALGO_DEF_UPDATE_INT
+
+        if configData[KEY_SELF_PLAY_EP] is None:
+            configData[KEY_SELF_PLAY_EP] = ALGO_DEF_SPLAY_EPISODES
+
+        if configData[KEY_SELF_PLAY_DELTA] is None:
+            configData[KEY_SELF_PLAY_DELTA] = ALGO_DEF_SPLAY_DELTA
 
         if configData[KEY_WORKSPACE] is None:
             configData[KEY_WORKSPACE] = os.path.abspath(os.curdir)

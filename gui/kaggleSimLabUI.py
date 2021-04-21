@@ -1,6 +1,5 @@
 # This module takes care of creating the main GUI for the application
 
-
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -11,7 +10,7 @@ from PyQt5.QtWidgets import (
 )
 
 # Custom module imports related to creating the subcomponents of the GUI and their functioning
-import config.envConfig as ecfg
+import config.environmentConfig as ecfg
 import config.windowConfig as wdw
 import utils.dispatcher as udispatch
 
@@ -78,7 +77,7 @@ class KaggleSimLabUI(QMainWindow):
 
         # The getter methods return None if the items are placeholders
         # The last check is to ensure we only enable the start button only if we support that environment
-        if currOptim and currAlgo and currEnviron and currEnviron in ecfg.ENV_SUPPORTED:
+        if currOptim and currAlgo and currEnviron and currEnviron in ecfg.ENV_SUPPORTED_LIST:
             self.startButton.setEnabled(True)
         else:
             self.startButton.setEnabled(False)

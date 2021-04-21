@@ -11,8 +11,9 @@ from PyQt5.QtWidgets import (
 )
 
 # Custom module imports
+import utils.nn
 from gui.dialogWidgets import LayerConfigDialog    # Window module for layer configuration
-import config.algoConfig as acfg                   # Custom algorithm configuration module
+import config.algorithmsConfig as acfg                   # Custom algorithm configuration module
 
 
 # Placeholder text constants
@@ -20,13 +21,16 @@ PLACEHOLDER_ALGO_BOX  = '-- Select your Algorithm --'
 PLACEHOLDER_OPTIM_BOX = '-- Select your Optimizer --'
 
 # GUI related contstants
-GUI_LABEL_LEARNRATE     = 'Learning Rate'
-GUI_LABEL_NUM_LAYERS    = 'Number of Layers'
-GUI_LABEL_NUM_EPOCHS    = 'Training Epochs'
-GUI_LABEL_MODEL_UPDATE  = 'Model Update Interval'
-GUI_BUTTON_CONFIG_LAYER = 'Configure'
-GUI_LEARNRATE_PRECISION = 9
-GUI_LEARNRATE_STEP      = 1e-9
+GUI_LABEL_LEARNRATE       = 'Learning Rate'
+GUI_LABEL_NUM_LAYERS      = 'Number of Layers'
+GUI_LABEL_NUM_EPISODES    = 'Training Episodes'
+GUI_LABEL_WARMUP_EPISODES = 'Warmup Episodes'
+GUI_LABEL_MODEL_UPDATE    = 'Checkpoint Interval'
+GUI_LABEL_SELF_PLAY       = 'Self-Play Update Interval'
+GUI_LABEL_SELF_PLAY_DELTA = 'Self-Play Update Delta'
+GUI_BUTTON_CONFIG_LAYER   = 'Configure'
+GUI_LEARNRATE_PRECISION   = 9
+GUI_LEARNRATE_STEP        = 1e-9
 
 
 class AlgoWidget(QWidget):
@@ -35,10 +39,10 @@ class AlgoWidget(QWidget):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.parent = parent                # Store a reference to the parent container
-        self.algoConfig = acfg.AlgoConfig() # Create an instance for storing algorithm configuration info
-        self.algoMap = acfg.ALGO_MAP        # Store a local mapping of the algorithms
-        self.optimMap = acfg.OPTIM_LIST     # Store a local mapping of the optimizers
+        self.parent = parent                        # Store a reference to the parent container
+        self.algoConfig = acfg.AlgoConfig()         # Create an instance for storing algorithm configuration info
+        self.algoMap = acfg.ALGO_MAP                # Store a local mapping of the algorithms
+        self.optimMap = utils.nn.OPTIM_MAP.keys()   # Store a local mapping of the optimizers
 
         self.mainLayout = QGridLayout(self) # Create the layout -- Grid layout
 
@@ -46,7 +50,10 @@ class AlgoWidget(QWidget):
         self.createOptimListBox()           # Create the optimizer selection box
         self.createLearnRate()              # Create the learning rate spinbox along with label
         self.createNumLayers()              # Create the number of layers widgets
-        self.createNumEpochs()              # Create the epoch selection widgets
+        self.createNumEpisodes()            # Create the epidodes selection widgets
+        self.createWarmupEpisodes()         # Create the warmup episodes selection widget
+        self.createSelfPlayUpdate()         # Create the number of episodes before each self-play update widget
+        self.createSelfPlayDelta()          # Create the delta parameter for self-play update widget
         self.createModelUpdateInterval()    # Create the update interval widgets
 
 
@@ -87,7 +94,7 @@ class AlgoWidget(QWidget):
         # So that we don't allow setting negative learning rates
         # Set decimal precision to GUI_LEARNRATE_PRECISION
         # Set the update step to be GUI_LEARNRATE_STEP
-        self.learnRateBox.setMinimum(0.0)
+        self.learnRateBox.setMinimum(GUI_LEARNRATE_STEP)
         self.learnRateBox.setDecimals(GUI_LEARNRATE_PRECISION)
         self.learnRateBox.setSingleStep(GUI_LEARNRATE_STEP)
 
@@ -115,19 +122,62 @@ class AlgoWidget(QWidget):
         self.mainLayout.addWidget(self.numLayersConfigButton, 4, 3, 1, 1)
 
 
-    def createNumEpochs(self):
+    def createNumEpisodes(self):
         """ Creates the appropriate widgets of setting up the total number of epochs """
-        self.numEpochsLabel = QLabel(GUI_LABEL_NUM_EPOCHS)
-        self.numEpochsBox = QSpinBox()
+        self.numEpisodesLabel = QLabel(GUI_LABEL_NUM_EPISODES)
+        self.numEpisodesBox = QSpinBox()
 
-        self.numEpochsBox.setMinimum(1)     # Set the minimum number of training epochs to 1
-        self.numEpochsBox.setMaximum(1e8)   # Set the maximum number of training epochs
+        self.numEpisodesBox.setMinimum(1)     # Set the minimum number of training epochs to 1
 
-        # Connect the handler for change in epochs value
-        self.numEpochsBox.valueChanged.connect(self.numEpochsHandler)
+        # Connect the handler for change in episode value
+        self.numEpisodesBox.valueChanged.connect(self.numEpisodesHandler)
 
-        self.mainLayout.addWidget(self.numEpochsLabel, 6, 0, 1, 1)
-        self.mainLayout.addWidget(self.numEpochsBox, 6, 1, 1, 3)
+        self.mainLayout.addWidget(self.numEpisodesLabel, 6, 0, 1, 1)
+        self.mainLayout.addWidget(self.numEpisodesBox, 6, 1, 1, 3)
+
+
+    def createWarmupEpisodes(self):
+        """ Creates the appropirate widgets for setting up the total number of warmup episodes """
+        self.warmupLabel = QLabel(GUI_LABEL_WARMUP_EPISODES)
+        self.warmupBox = QSpinBox()
+
+        self.warmupBox.setMinimum(0)    # Lower bound on the number of warmup episodes
+
+        # Connect the handler for change in warmup episodes
+        self.warmupBox.valueChanged.connect(self.numWarmupEpisodesHandler)
+
+        self.mainLayout.addWidget(self.warmupLabel, 7, 0, 1, 1)
+        self.mainLayout.addWidget(self.warmupBox, 7, 1, 1, 3)
+
+
+    def createSelfPlayUpdate(self):
+        """ Create the appropriate widgets for setting up the episodes per self-play update """
+        self.selfPlayUpdateLabel = QLabel(GUI_LABEL_SELF_PLAY)
+        self.selfPlayUpdateBox = QSpinBox()
+
+        self.selfPlayUpdateBox.setMinimum(1)    # Lower bound on the number of episodes per self-play update
+
+        # Connect the handler for change in self-play update
+        self.selfPlayUpdateBox.valueChanged.connect(self.selfPlayUpdateHandler)
+
+        self.mainLayout.addWidget(self.selfPlayUpdateLabel, 8, 0, 1, 1)
+        self.mainLayout.addWidget(self.selfPlayUpdateBox, 8, 1, 1, 3)
+
+
+    def createSelfPlayDelta(self):
+        """ Creates the appropriate widgets for setting up the delta for self-play updates """
+        self.selfPlayDeltaLabel = QLabel(GUI_LABEL_SELF_PLAY_DELTA)
+        self.selfPlayDeltaBox = QDoubleSpinBox()
+
+        self.selfPlayDeltaBox.setMinimum(GUI_LEARNRATE_STEP)        # Keep the same as learning rate (doesn't matter)
+        self.selfPlayDeltaBox.setDecimals(GUI_LEARNRATE_PRECISION)
+        self.selfPlayDeltaBox.setSingleStep(GUI_LEARNRATE_STEP)
+
+        # Connect it to it's respective handler
+        self.selfPlayDeltaBox.valueChanged.connect(self.selfPlayDeltaHandler)
+
+        self.mainLayout.addWidget(self.selfPlayDeltaBox, 9, 1, 1, 3)
+        self.mainLayout.addWidget(self.selfPlayDeltaLabel, 9, 0, 1, 1)
 
 
     def createModelUpdateInterval(self):
@@ -141,8 +191,8 @@ class AlgoWidget(QWidget):
         # Connect it to its respective handler
         self.modelUpdateBox.valueChanged.connect(self.intervalUpdateHandler)
 
-        self.mainLayout.addWidget(self.modelUpdateLabel, 7, 0, 1, 1)
-        self.mainLayout.addWidget(self.modelUpdateBox, 7, 1, 1, 3)
+        self.mainLayout.addWidget(self.modelUpdateLabel, 10, 0, 1, 1)
+        self.mainLayout.addWidget(self.modelUpdateBox, 10, 1, 1, 3)
 
 
     # *****************************************
@@ -195,9 +245,24 @@ class AlgoWidget(QWidget):
         self.configDialog.exec_()
 
 
-    def numEpochsHandler(self, numEpochs):
+    def numEpisodesHandler(self, numEpisodes):
         """ Handler for updating the change in the number of epochs """
-        self.algoConfig.setNumEpochs(numEpochs)
+        self.algoConfig.setNumEpisodes(numEpisodes)
+
+
+    def numWarmupEpisodesHandler(self, numWarmupEpisodes):
+        """ Handler for updating the change in number of warmup episodes """
+        self.algoConfig.setNumWarmupEpisodes(numWarmupEpisodes)
+
+
+    def selfPlayUpdateHandler(self, episodes):
+        """ Handler for updating the change in number of self-play update episodes """
+        self.algoConfig.setSelfPlayUpdateEpisodes(episodes)
+
+
+    def selfPlayDeltaHandler(self, delta):
+        """ Handler for updating the change in the delta of self-play update """
+        self.algoConfig.setSelfPlayDelta(delta)
 
 
     def intervalUpdateHandler(self, interval):

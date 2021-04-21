@@ -4,8 +4,8 @@ import os
 import sys
 import time
 
-import config.algoConfig as acfg
-import config.envConfig as ecfg
+import config.algorithmsConfig as acfg
+import config.environmentConfig as ecfg
 import utils.nn as unn                      # Module for building a neural network
 
 
@@ -59,23 +59,33 @@ def _tryCreatingDirectory(environ, parentDir):
 def dispatcher(configData, trainingTextBox, progressBar):
     """ """
 
+    env_name = configData[acfg.KEY_ENVIRONMENT]
+    env_workspace = configData[acfg.KEY_WORKSPACE]
+    n_agents = configData[acfg.KEY_NUM_AGENTS]
+    units_list = configData[acfg.KEY_UNITS_LIST]
+    activ_list = configData[acfg.KEY_ACTIV_LIST]
+    optim = configData[acfg.KEY_OPTIM]
+    learn_rate = configData[acfg.KEY_LEARN_RATE]
+
     # First create the directories that will be used to save stuff during training
-    status, createdDirs = _tryCreatingDirectory(configData[acfg.KEY_ENVIRONMENT], configData[acfg.KEY_WORKSPACE])
-    if status:
-        return FAILED, [DISPATCH_ERR_INVAL_DIR]
+    # status, createdDirs = _tryCreatingDirectory(env_name, env_workspace)
+    # if status:
+    #     return FAILED, [DISPATCH_ERR_INVAL_DIR]
 
     # Create the environment
-    env_name = configData[acfg.KEY_ENVIRONMENT]
-    training_env = ecfg.ENV_MAP[env_name]()
+    training_env = ecfg.ENV_MAP[env_name].getEnvironment()
+    training_env = training_env(n_agents)
 
     # Create the neural network
-    network = unn.build_fc_net(env=training_env,
-                               nLayers=configData[acfg.KEY_NUM_LAYERS],
-                               unitsList=configData[acfg.KEY_UNITS_LIST],
-                               activList=configData[acfg.KEY_ACTIV_LIST]
-                               )
+    network = unn.FeedForwardNet(ip_dim=training_env.getObservationLength(),
+                                 op_dim=training_env.getNumActions(),
+                                 units_list=units_list,
+                                 activ_list=activ_list
+                                )
+    # Now create the optimizer
+    optimizer = unn.buildOptimizer(network, optim, learn_rate)
+    print(network)
 
-    #TODO: Make updates to the environment classes to work with tf-agents
     #TODO: Start the training loop (and start tensorboard as well)
 
     return SUCCESS, None

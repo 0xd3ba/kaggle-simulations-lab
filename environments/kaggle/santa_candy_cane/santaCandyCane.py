@@ -1,7 +1,7 @@
 # This module contains the class for "Hungry-Geese" Kaggle competition
 #
 
-from environments.baseEnvironment import BaseEnvironment
+from environments.environmentWrapper import EnvironmentWrapper
 
 SANTA_CANDY_TITLE    = "Santa 2020 - The Candy Cane Contest"
 SANTA_CANDY_SUBTITLE = "May your workdays be merry and bright"
@@ -35,7 +35,7 @@ SANTA_CANDY_INFO     = [
 ]
 
 
-class SantaCandyCane(BaseEnvironment):
+class SantaCandyCane(EnvironmentWrapper):
     """ Class for Hungry Geese environment """
 
     def __init__(self):

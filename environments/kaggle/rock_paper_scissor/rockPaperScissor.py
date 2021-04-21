@@ -1,7 +1,7 @@
 # This module contains the class for "Hungry-Geese" Kaggle competition
 #
 
-from environments.baseEnvironment import BaseEnvironment
+from environments.environmentWrapper import EnvironmentWrapper
 
 ROCK_PAPER_TITLE    = "Rock, Paper, Scissors"
 ROCK_PAPER_SUBTITLE = "Shoot!"
@@ -35,7 +35,7 @@ ROCK_PAPER_INFO     = [
 ]
 
 
-class RockPaperScissor(BaseEnvironment):
+class RockPaperScissor(EnvironmentWrapper):
     """ Class for Hungry Geese environment """
 
     def __init__(self):

@@ -1,7 +1,7 @@
 # This module contains the class for "Hungry-Geese" Kaggle competition
 #
 
-from environments.baseEnvironment import BaseEnvironment
+from environments.environmentWrapper import EnvironmentWrapper
 
 CONNECT_X_TITLE    = "Connect X"
 CONNECT_X_SUBTITLE = "Connect your checkers in a row before your opponent!"
@@ -17,7 +17,7 @@ CONNECT_X_INFO     = [
 ]
 
 
-class ConnectX(BaseEnvironment):
+class ConnectX(EnvironmentWrapper):
     """ Class for Hungry Geese environment """
 
     def __init__(self):

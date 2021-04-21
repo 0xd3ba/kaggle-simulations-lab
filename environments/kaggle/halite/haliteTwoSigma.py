@@ -1,7 +1,7 @@
 # This module contains the class for "Hungry-Geese" Kaggle competition
 #
 
-from environments.baseEnvironment import BaseEnvironment
+from environments.environmentWrapper import EnvironmentWrapper
 
 HALITE_TITLE    = "Halite by Two Sigma - Playground Edition"
 HALITE_SUBTITLE = "Collect the most halite during your match in space"
@@ -37,7 +37,7 @@ HALITE_INFO     = [
 ]
 
 
-class HaliteTwoSigma(BaseEnvironment):
+class HaliteTwoSigma(EnvironmentWrapper):
     """ Class for Hungry Geese environment """
 
     def __init__(self):

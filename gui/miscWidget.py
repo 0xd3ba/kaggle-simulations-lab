@@ -12,21 +12,23 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QTextBrowser,
     QLineEdit,
-    QFileDialog
+    QFileDialog,
+    QSpinBox,
+    QLabel
 )
 
 # Custom module imports
-import config.algoConfig as acfg                   # Algorithm specific configuration information
-import config.envConfig as ecfg                    # Environment configuration information
-import environments.baseEnvironment as baseenv     # Custom Base environment
+import config.environmentConfig as ecfg                  # Environment configuration information
 
 
 # Placeholder text constants
-PLACEHOLDER_ENV_BOX   = '-- Select your Environment --'
+PLACEHOLDER_ENV_BOX = '-- Select your Environment --'
 
 # GUI related contstants
 GUI_BUTTON_WORKSPACE = 'Change Workspace'
 GUI_SELECT_WORKSPACE = 'Select Workspace'
+GUI_LABEL_NUM_AGENTS = 'Number of Agents'
+GUI_NUM_AGENTS_MIN   = 2
 
 
 class MiscWidget(QWidget):
@@ -36,7 +38,7 @@ class MiscWidget(QWidget):
 
         self.parent = parent
         self.envMap = ecfg.ENV_MAP
-        self._baseEnv = baseenv.BaseEnvironment()
+        self._baseEnv = ecfg.DUMMY_ENVIRONMENT
 
         self.mainLayout = QGridLayout(self)
         self.fileDialog = QFileDialog(parent)
@@ -44,6 +46,7 @@ class MiscWidget(QWidget):
         self.createProjectInfo()            # Create the project information widget
         self.createTextBox()                # Create the text box about Hungry Geese
         self.createEnvListBox()             # Create the environment selection widgets
+        self.createNumAgentsBox()           # Create the number of agents widget
         self.createWorkspaceBox()           # Create the workspace selection widgets
 
 
@@ -78,6 +81,23 @@ class MiscWidget(QWidget):
         self.mainLayout.addWidget(self.envListBox, 2, 0, 1, 4)
 
 
+    def createNumAgentsBox(self):
+        """ Creates the widget for selecting the number of agents on the environment """
+        self.numAgentsLabel = QLabel(GUI_LABEL_NUM_AGENTS)
+        self.numAgentsBox = QSpinBox()
+
+        self.numAgentsBox.setMinimum(GUI_NUM_AGENTS_MIN)  # There are atleast two agents in a multi-agent setting
+        # NOTE: The upper bound varies depending on the environment and hence needs to be set on environment
+        #       change event (triggered when item is changed)
+
+        # Connect it to event handler for handling events related to setting number of agents
+        self.numAgentsBox.valueChanged.connect(self.numAgentsHandler)
+
+        # Finally add the widgets to the layout
+        self.mainLayout.addWidget(self.numAgentsLabel, 3, 0, 1, 1)
+        self.mainLayout.addWidget(self.numAgentsBox, 3, 1, 1, 3)
+
+
     def createWorkspaceBox(self):
         """ Creates the widget that asks the user to select the workspace directory """
         self.chooseWorkspaceBtn = QPushButton(GUI_BUTTON_WORKSPACE)
@@ -90,8 +110,8 @@ class MiscWidget(QWidget):
         # Connect the button to the handler for updating the workspace
         self.chooseWorkspaceBtn.clicked.connect(self.changeWorkspaceHandler)
 
-        self.mainLayout.addWidget(self.currWorkspaceBox, 3, 0, 1, 3)
-        self.mainLayout.addWidget(self.chooseWorkspaceBtn, 3, 3, 1, 1)
+        self.mainLayout.addWidget(self.currWorkspaceBox, 4, 0, 1, 3)
+        self.mainLayout.addWidget(self.chooseWorkspaceBtn, 4, 3, 1, 1)
 
 
     # *****************************************
@@ -107,10 +127,17 @@ class MiscWidget(QWidget):
             self.textBrowser.setText(self._baseEnv.getDescription())    # Reset the textbox with default description
         else:
             # Update the textbox with the description of the environment
-            self.textBrowser.setText(self.envMap[selectedEnv]().getDescription())
+            # Next update the maximum number of agents that can be set for this environment
+            self.textBrowser.setText(self.envMap[selectedEnv].getDescription())
+            self.numAgentsBox.setMaximum(self.envMap[selectedEnv].getMaxAgents())
 
         self.parent.algoWidget.algoConfig.setEnvironment(selectedEnv)
         self.parent.startButtonEnablerDisabler()
+
+    def numAgentsHandler(self, n):
+        """ Handle the event when number of agents are changed """
+
+        self.parent.algoWidget.algoConfig.setNumAgents(n)
 
 
     def changeWorkspaceHandler(self):

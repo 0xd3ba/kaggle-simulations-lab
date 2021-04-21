@@ -1,0 +1,11 @@
+{
+  "title": "Kaggle Simulations Lab",
+  "subTitle": "Build. Experiment. Compete.",
+  "description": [
+    "Description of the environment (if any)",
+    "Each paragraph must be a entry in this list"
+  ],
+  "link": "https://github.com/0xd3ba/kaggle-simulations-lab",
+  "supported": false,
+  "max_agents": 0
+}

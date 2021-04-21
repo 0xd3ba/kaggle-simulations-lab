@@ -1,0 +1,11 @@
+{
+  "title": "Name of the Environment",
+  "subTitle": "Sub-title of the Environment (if any)",
+  "description": [
+    "Description of the environment (if any)",
+    "Each paragraph must be a entry in this list"
+  ],
+  "link": "Link to the environment (if any)",
+  "supported": false,
+  "max_agents": 0
+}
