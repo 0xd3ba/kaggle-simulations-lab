@@ -14,6 +14,7 @@ JSON_ENV_SUBTITLE = 'subTitle'
 JSON_ENV_DESC = 'description'
 JSON_ENV_LINK = 'link'
 JSON_ENV_SUPPORTED = 'supported'
+JSON_MIN_AGENTS = 'min_agents'
 JSON_MAX_AGENTS = 'max_agents'
 # *********************************************
 
@@ -29,6 +30,7 @@ class EnvironmentJsonParser:
         self.link = None            # Link to the kaggle competition
         self.supported = None       # Is the environment supported by this lab
         self.max_agents = None      # Maximum number of agents that can be in the environment
+        self.min_agents = None
 
     def parse(self):
         """ Tries to parse the JSON file. In case of any errors, the environment is skipped
@@ -57,6 +59,7 @@ class EnvironmentJsonParser:
             description = parsed_json[JSON_ENV_DESC]
             link = parsed_json[JSON_ENV_LINK]
             supported = parsed_json[JSON_ENV_SUPPORTED]
+            min_agents = parsed_json[JSON_MIN_AGENTS]
             max_agents = parsed_json[JSON_MAX_AGENTS]
 
         except KeyError as kerr:
@@ -69,6 +72,7 @@ class EnvironmentJsonParser:
         self.description = description
         self.link = link
         self.supported = supported
+        self.min_agents = min_agents
         self.max_agents = max_agents
 
     def getPath(self):
@@ -85,6 +89,9 @@ class EnvironmentJsonParser:
 
     def getLink(self):
         return self.link
+
+    def getMinAgents(self):
+        return self.min_agents
 
     def getMaxAgents(self):
         return self.max_agents

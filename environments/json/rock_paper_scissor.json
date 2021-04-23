@@ -9,5 +9,6 @@
   ],
   "link": "https://www.kaggle.com/c/rock-paper-scissors",
   "supported": false,
+  "min_agents": 0,
   "max_agents": 0
 }

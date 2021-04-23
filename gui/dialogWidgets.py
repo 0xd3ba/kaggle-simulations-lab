@@ -1,6 +1,11 @@
 # This module contains custom dialog widgets for the GUI
 import os
 import pyperclip
+from PyQt5.QtCore import (
+    QObject,
+    QThread,
+    pyqtSignal
+)
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QDialog,
@@ -17,6 +22,7 @@ from PyQt5.QtWidgets import (
 )
 
 # Custom module imports
+import gui.workers as gui_worker               # Module containing the thread specific classes
 import config.algorithmsConfig as acfg         # Module containing algorithm configuration information
 import config.windowConfig as winw             # Module containing window configuration information
 import utils.dispatcher as udispatch           # Module containing the dispatcher
@@ -45,6 +51,7 @@ LAYER_CONFIG_MIN_UNITS    = 1
 LAYER_CONFIG_MAX_UNITS    = 2048
 
 # Constants for GUI buttons
+GUI_BUTTON_TRAIN = 'Train'
 GUI_BUTTON_CANCEL = 'Cancel'
 GUI_BUTTON_CLOSE  = 'Close'
 
@@ -164,7 +171,6 @@ class LayerConfigDialog(QDialog):
         self.close()
 
 
-
 class TrainingDialog(QDialog):
     """ Class responsible for creating the (animated) algorithm training dialog """
 
@@ -180,7 +186,7 @@ class TrainingDialog(QDialog):
         self.mainLayout = QGridLayout()             # Create the main layout for this window -- Grid Layout
 
         self.createTensorBoardLinkBox()             # List box corresponding to tensorboard server link
-        self.createConfigInfoTextBox()              # Textbox corresponding to displaying current algorithm config.
+        self.createConfigInfoTextBox()              # Textbox corresponding to displaying current algorithm config_data.
         self.createTrainingInfoTextBox()            # Textbox corresponding to displaying tensorboard links and all
         self.createProgressBar()                    # Progress bar to track the training progress so far
         self.createOptionButtons()                  # Option buttons to cancel the training
@@ -279,18 +285,22 @@ class TrainingDialog(QDialog):
 
     def createOptionButtons(self):
         """ Creates the buttons Close and Cancel and adds them to this widget """
+        self.trainBtn = QPushButton(GUI_BUTTON_TRAIN)
         self.closeBtn = QPushButton(GUI_BUTTON_CLOSE)
         self.cancelBtn = QPushButton(GUI_BUTTON_CANCEL)
 
+        self.trainBtn.clicked.connect(self.trainButtonClicked)
         self.closeBtn.clicked.connect(self.closeButtonClicked)
         self.cancelBtn.clicked.connect(self.cancelButtonClicked)
 
         # Initially close button is disabled. It's enabled only when training is complete
         # When training completes, the cancel button gets disabled
         self.closeBtn.setEnabled(False)
+        self.cancelBtn.setEnabled(False)
 
         self.mainLayout.addWidget(self.cancelBtn, 4, 3, 1, 1)
         self.mainLayout.addWidget(self.closeBtn, 4, 2, 1, 1)
+        self.mainLayout.addWidget(self.trainBtn, 4, 1, 1, 1)
 
     # *****************************************
     # Below methods contains the control logic
@@ -298,16 +308,54 @@ class TrainingDialog(QDialog):
     # interacting with this subcomponent of GUI
     # *****************************************
 
+    def trainButtonClicked(self):
+        """ Starts the thread for training and disables itself and enables the cancel button """
+        self.trainBtn.setEnabled(False)
+        self.cancelBtn.setEnabled(True)
+
+        self.thread_ = QThread()
+        self.worker_ = gui_worker.Worker(self.config)
+        self.worker_.moveToThread(self.thread_)
+        self.thread_.started.connect(self.worker_.run)
+
+        # Now connect the signals
+        self.worker_.signals.finished_signal.connect(self.thread_.quit)
+        self.worker_.signals.finished_signal.connect(self.worker_.stop)
+        self.worker_.signals.finished_signal.connect(self.trainingDone)
+        self.worker_.signals.progress_signal.connect(self.progressBarUpdate)
+        self.worker_.signals.textbox_signal.connect(self.trainingInfoUpdate)
+
+        self.thread_.start()
+
+
     def closeButtonClicked(self):
         """ Does nothing but closes the window """
-        # TODO: Stop TensorBoard server process that was forked
         self.close()
+
 
     def cancelButtonClicked(self):
         """ Stops the algorithm, saves the model, stops tensorboard and closes """
         #TODO: Do the above mentioned stuff
+        self.worker_.stop()
         self.close()
+
+
+    def trainingDone(self):
+        """ Enables the close button and disables the cancel button """
+        self.cancelBtn.setEnabled(False)
+        self.closeBtn.setEnabled(True)
+
 
     def tensorBoardCopyCommand(self):
         """ Copies the provided command of tensorboard into clipboard """
         pyperclip.copy(self.tboardCmd.text())
+
+
+    def progressBarUpdate(self, percent):
+        """ Updates the progress bar with the supplied percent """
+        self.progressBar.setValue(percent)
+
+
+    def trainingInfoUpdate(self, data):
+        """ Updates the training information on the text box """
+        pass

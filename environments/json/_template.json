@@ -7,5 +7,6 @@
   ],
   "link": "Link to the environment (if any)",
   "supported": false,
+  "min_agents": 0,
   "max_agents": 0
 }

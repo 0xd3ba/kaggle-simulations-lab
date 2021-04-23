@@ -6,5 +6,6 @@
   ],
   "link": "https://www.kaggle.com/c/connectx",
   "supported": false,
+  "min_agents": 2,
   "max_agents": 2
 }

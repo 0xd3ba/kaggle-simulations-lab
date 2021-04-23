@@ -8,7 +8,7 @@ import utils.jsonParser as jsonParser
 class EnvironmentWrapper:
     """ Wrapper class for all Kaggle Environments """
 
-    def __init__(self, environment, title, subtitle, description, link, max_agents, supported):
+    def __init__(self, environment, title, subtitle, description, link, min_agents, max_agents, supported):
         pass
         self.environment = environment                          # Reference to the actual environment class
         self.environmentTitle = title                           # Title of the environment
@@ -17,6 +17,7 @@ class EnvironmentWrapper:
         self.description = self.buildDescription(description)   # Description about the environment
         self.isSupported = supported                            # Is the environment supported ?
         self.maxAgents = max_agents                             # The maximum number of agents in the environment
+        self.minAgents = min_agents                             # The minimum number of agents in the environment
 
     def buildDescription(self, paras):
         """ Builds an HTML formatted description for the environment and returns it"""
@@ -72,6 +73,10 @@ class EnvironmentWrapper:
     def getCompetitionLink(self):
         """ Returns the link of the Kaggle competition """
         return self.competitionLink
+
+    def getMinAgents(self):
+        """ Returns the minimum number of agents of the environment """
+        return self.minAgents
 
     def getMaxAgents(self):
         """ Returns the maximum number of agents of the environment """

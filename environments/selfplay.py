@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 
 
-class SelfPlayBase:
+class SelfPlay:
     """ Base environment for self-play """
 
     def __init__(self, n_agents=2):
@@ -20,10 +20,9 @@ class SelfPlayBase:
         self.n_obs = None                                   # Number of components in the observation vector
         self.n_actions = None                               # Number of valid actions
 
-    def updateAgents(self, model):
+    def updateAgents(self, agent):
         """ Responsible for updating the agents by cloning the provided model """
-        model_copy = copy.deepcopy(model)
-        self.clones = [model_copy if i != self.getOurAgentIndex() else None
+        self.clones = [copy.deepcopy(agent) if i != self.getOurAgentIndex() else None
                        for i in range(self.n_agents)
                        ]
 
@@ -65,14 +64,11 @@ class SelfPlayBase:
 
     def _clone_predict(self, agentID, agentObs):
         """ Predicts the next action of the clone (i.e. our opponent) based on its observation """
-        clone_model = self.clones[agentID]
+        clone_agent = self.clones[agentID]
 
         # Now predict the action. Note that agentObs is a vector of shape (n_observations, )
-        action_scores = clone_model(torch.tensor(agentObs))
-        action_probs = F.softmax(action_scores, dim=0)
-        action_probs = action_probs.detach().cpu().numpy()
-        action = np.random.choice(range(self.getNumActions()), p=action_probs)
-
+        # clone_agent is an instance of a child of "Agent" class
+        action = clone_agent.predict_action(agentObs)
         return action
 
     def updateCurrentObservation(self, obs):

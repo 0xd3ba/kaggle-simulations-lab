@@ -5,7 +5,7 @@ import kaggle_environments as kaggle_env
 from kaggle_environments.envs.hungry_geese import hungry_geese
 
 # Custom module for supporting self-play
-from environments.selfPlayBase import SelfPlayBase
+from environments.selfplay import SelfPlay
 
 HUNGRY_GEESE_TITLE    = "Hungry Geese"
 HUNGRY_GEESE_SUBTITLE = "Dont. Stop. Eating."
@@ -33,7 +33,7 @@ HUNGRY_GEESE_INFO     = [
 ]
 
 
-class HungryGeese(SelfPlayBase):
+class HungryGeese(SelfPlay):
     """ Class for Hungry Geese environment """
 
     HUNGRY_GEESE_ENV_NAME = 'hungry_geese'

@@ -11,5 +11,6 @@
   ],
   "link": "https://www.kaggle.com/c/google-football/",
   "supported": false,
+  "min_agents": 0,
   "max_agents": 0
 }

@@ -8,5 +8,6 @@
   ],
   "link": "https://www.kaggle.com/c/hungry-geese",
   "supported": true,
+  "min_agents": 2,
   "max_agents": 8
 }

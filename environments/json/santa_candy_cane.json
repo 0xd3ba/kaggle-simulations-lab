@@ -9,5 +9,6 @@
   ],
   "link": "https://www.kaggle.com/c/santa-2020",
   "supported": false,
+  "min_agents": 0,
   "max_agents": 0
 }

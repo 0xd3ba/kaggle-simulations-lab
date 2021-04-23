@@ -5,7 +5,7 @@ import os
 
 # Custom algorithm imports
 from agents.a2c.a2c import A2C
-from agents.a3c                import A3C
+from agents.a3c import A3C
 from agents.dqn.deepQNetwork import DeepQNetwork
 from agents.ddqn.doubleDeepQNetwork import DoubleDeepQNetwork
 from agents.reinforce.reinforce import REINFORCE
@@ -14,15 +14,11 @@ from agents.reinforce.reinforce import REINFORCE
 # List of algorithms supported
 # Supporting a new algorithm only needs an entry added into this.
 ALGO_LIST = [
-    A2C,
-    A3C,
     DeepQNetwork,
-    DoubleDeepQNetwork,
-    REINFORCE
 ]
 
 # Create the mappings between names of the algorithms and their classes
-ALGO_MAP = {algo.ALGO_NAME: algo for algo in ALGO_LIST}
+ALGO_MAP = {algo.get_name(): algo for algo in ALGO_LIST}
 
 # Keys related to the packing of the algorithm configuration data
 KEY_ALGO            = 'algorithm'
@@ -52,6 +48,11 @@ ALGO_DEF_SPLAY_EPISODES = 10
 ALGO_DEF_SPLAY_DELTA    = 0.01
 ALGO_DEF_NUM_UNITS      = 32
 ALGO_DEF_ACTIVATION     = 'ReLU'
+
+
+def get_agent(agent_name):
+    """ Returns class reference to the agent """
+    return ALGO_MAP[agent_name]
 
 
 class AlgoConfig:
@@ -208,7 +209,7 @@ class AlgoConfig:
             configData[KEY_NUM_EPISODES] = ALGO_DEF_NUM_EPISODES
 
         if configData[KEY_NUM_WARMUP] is None:
-            configData[KEY_NUM_EPISODES] = ALGO_DEF_NUM_WARMUP
+            configData[KEY_NUM_WARMUP] = ALGO_DEF_NUM_WARMUP
 
         if configData[KEY_LEARN_RATE] is None:
             configData[KEY_LEARN_RATE] = ALGO_DEF_LEARN_RATE

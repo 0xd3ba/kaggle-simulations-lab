@@ -7,5 +7,6 @@
   ],
   "link": "https://github.com/0xd3ba/kaggle-simulations-lab",
   "supported": false,
+  "min_agents": 0,
   "max_agents": 0
 }

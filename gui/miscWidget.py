@@ -86,7 +86,9 @@ class MiscWidget(QWidget):
         self.numAgentsLabel = QLabel(GUI_LABEL_NUM_AGENTS)
         self.numAgentsBox = QSpinBox()
 
-        self.numAgentsBox.setMinimum(GUI_NUM_AGENTS_MIN)  # There are atleast two agents in a multi-agent setting
+        self.numAgentsBox.setMinimum(0)     # Initally environment is not selected, so agents are 0
+        self.numAgentsBox.setMaximum(0)     # Initally environment is not selected, so agents are 0
+
         # NOTE: The upper bound varies depending on the environment and hence needs to be set on environment
         #       change event (triggered when item is changed)
 
@@ -129,6 +131,7 @@ class MiscWidget(QWidget):
             # Update the textbox with the description of the environment
             # Next update the maximum number of agents that can be set for this environment
             self.textBrowser.setText(self.envMap[selectedEnv].getDescription())
+            self.numAgentsBox.setMinimum(self.envMap[selectedEnv].getMinAgents())
             self.numAgentsBox.setMaximum(self.envMap[selectedEnv].getMaxAgents())
 
         self.parent.algoWidget.algoConfig.setEnvironment(selectedEnv)

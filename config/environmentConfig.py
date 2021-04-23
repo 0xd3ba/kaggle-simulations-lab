@@ -54,6 +54,7 @@ def build_dummy_environment():
         subtitle=parser.getSubtitle(),
         description=parser.getDescription(),
         link=parser.getLink(),
+        min_agents=parser.getMinAgents(),
         max_agents=parser.getMaxAgents(),
         supported=False
     )
@@ -81,6 +82,7 @@ def registerEnvironments():
         description = parser.getDescription()
         link = parser.getLink()
         supported = parser.isEnvironmentSupported()
+        min_agents = parser.getMinAgents()
         max_agents = parser.getMaxAgents()
 
         # Add this environment to the supported list if it is supported.
@@ -93,5 +95,6 @@ def registerEnvironments():
                                             subtitle=subtitle,
                                             description=description,
                                             link=link,
+                                            min_agents=min_agents,
                                             max_agents=max_agents,
                                             supported=supported)

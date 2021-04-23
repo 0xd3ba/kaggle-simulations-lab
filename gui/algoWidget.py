@@ -113,7 +113,7 @@ class AlgoWidget(QWidget):
         
         self.numLayersBox.setMinimum(1)     # Set the minimum number of hidden layers to 1
 
-        # Connect the handlers corresponding to the config button and the spinbox
+        # Connect the handlers corresponding to the config_data button and the spinbox
         self.numLayersBox.valueChanged.connect(self.numLayersHandler)
         self.numLayersConfigButton.clicked.connect(self.configLayersHandler)
 
