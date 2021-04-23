@@ -162,6 +162,7 @@ class AlgoWidget(QWidget):
         self.selfPlayUpdateBox = QSpinBox()
 
         self.selfPlayUpdateBox.setMinimum(1)    # Lower bound on the number of episodes per self-play update
+        self.selfPlayUpdateBox.setMaximum(GUI_NUM_EPISODES_MAX)
 
         # Connect the handler for change in self-play update
         self.selfPlayUpdateBox.valueChanged.connect(self.selfPlayUpdateHandler)
@@ -219,6 +220,7 @@ class AlgoWidget(QWidget):
 
 
         self.modelUpdateBox.setMinimum(1)   # Set the minimum number of interval to 1
+        self.modelUpdateBox.setMinimum(GUI_NUM_EPISODES_MAX)
 
         # Connect it to its respective handler
         self.modelUpdateBox.valueChanged.connect(self.intervalUpdateHandler)

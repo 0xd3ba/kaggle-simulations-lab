@@ -1,15 +1,17 @@
-import time
-import torch
+# This module contains the trainer class for training our agent
 
+from torch.utils.tensorboard import SummaryWriter
 import config.algorithmsConfig as acfg
 
 
 class Trainer:
     """ Trainer class responsible for training the agent and logging """
     def __init__(self, worker_thread, config_data, agent):
-        self.config_data = config_data
-        self.worker_thread = worker_thread
-        self.agent = agent
+        self.config_data = config_data          # Dictionary containing training information
+        self.worker_thread = worker_thread      # Thread on which this trainer is running
+        self.agent = agent                      # The agent to train
+        self.writer = None                      # Tensorboard writer
+        self.can_log = False                    # Can we log the results ? Only true when writer is not None
 
 
     def need_to_stop(self):
@@ -19,8 +21,10 @@ class Trainer:
 
     def start(self):
         """ Trains until stop signal is received or all episodes have been looped """
+
+        self.instantiate_writer()        # Instantiate the summary writer object
+
         env = self.agent.get_environment()
-        log_dir = self.agent.get_log_directory()
         chkpt_dir = self.agent.get_model_directory()
 
         episodes = self.config_data[acfg.KEY_NUM_EPISODES]
@@ -48,22 +52,26 @@ class Trainer:
 
             # If it is time to save the agent to disk, save it to disk
             if e % chkpt_interval == 0 and chkpt_dir is not None:
-                print(f'saving to {chkpt_dir}')
                 self.agent.save(e)
 
             # If it is showdown time, start the showdown
             if e % showdown_interval == 0:
                 win_rate, avg_reward, avg_steps = self.showdown(showdown_episodes)
                 print(f'win_rate: {win_rate}\navg. reward: {avg_reward}\navg_steps: {avg_steps}\n')
-                # TODO: Log them into tensorboard
+                if self.logging_possible():
+                    self.writer.add_scalar('Evaluation/win_rate', win_rate, e)
+                    self.writer.add_scalar('Evaluation/avg_reward', avg_reward, e)
+                    self.writer.add_scalar('Evaluation/avg_steps', avg_steps, e)
 
             # If we have crossed the warmup episodes and we have reached the episode
             # when we can increase the difficulty by updating the clones
             if (e > warmup_episodes) and (e % selfplay_update_interval) == 0:
                 env.updateAgents(self.agent)
 
-            # TODO: Write tensorboard logs'
-            # TODO: Periodically save the agent to the directory
+            if self.logging_possible():
+                self.writer.add_scalar('Training/total_reward', total_reward, e)
+                self.writer.add_scalar('Training/total_steps', total_steps, e)
+                self.writer.add_scalar('Training/wins', int(won), e)
 
             self.update_progress_bar(e)
 
@@ -104,3 +112,16 @@ class Trainer:
     def update_text_box(self):
         """ Updates the textbox by filling it with new stats """
         pass
+
+
+    def instantiate_writer(self):
+        """ Instantiates the summary writer object for tensorboard logging """
+        log_dir = self.agent.get_log_directory()
+        if log_dir is not None:
+            self.can_log = True
+            self.writer = SummaryWriter(log_dir=log_dir)
+
+
+    def logging_possible(self):
+        """ Returns a boolean indicating whether we can log or not """
+        return self.can_log

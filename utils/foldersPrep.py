@@ -18,8 +18,9 @@ class PrepareFolders:
         self.log_dir = None
         self.chkpt_dir = None
 
-        currTime = time.asctime()                       # Day Month Date Time Year
-        self.parentDirName = f'{self.name}-{currTime}'  # EnvironmentName-{Day Month Date ...etc }
+        currTime = time.asctime()                               # Day Month Date Time Year
+        parentDirName = f'{self.name}-{currTime}'               # EnvironmentName-{Day Month Date ...etc }
+        self.parentDirName = '_'.join(parentDirName.split(' ')) # Need to do this to eliminate spaces
 
 
     def get_root_dir(self):
