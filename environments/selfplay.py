@@ -9,7 +9,7 @@ import torch.nn.functional as F
 class SelfPlay:
     """ Base environment for self-play """
 
-    def __init__(self, n_agents=2):
+    def __init__(self, n_agents=2, n_warmup=0):
         """
         n_agents: Number of agents in the game (including our agent)
         """
@@ -19,6 +19,9 @@ class SelfPlay:
         self.curr_obs = None                                # Current observation
         self.n_obs = None                                   # Number of components in the observation vector
         self.n_actions = None                               # Number of valid actions
+        self.n_warmup = n_warmup                            # Number of warmup episodes
+
+        self._set_warmup_counter()
 
     def updateAgents(self, agent):
         """ Responsible for updating the agents by cloning the provided model """
@@ -71,6 +74,15 @@ class SelfPlay:
         action = clone_agent.predict_action(agentObs)
         return action
 
+    def _set_warmup_counter(self):
+        """ Sets the initial warmup counter to track the number of warmup episodes """
+        self.episodes_warmed_up_ = 0
+
+    def updateWarmupCounter(self):
+        """ Updates the warmup counter by 1 if we are still doing a warmup """
+        if self.episodes_warmed_up_ < self.n_warmup:
+            self.episodes_warmed_up_ += 1
+
     def updateCurrentObservation(self, obs):
         """ Responsible for updating the current observation of the environment """
         self.curr_obs = obs
@@ -80,7 +92,15 @@ class SelfPlay:
         self.n_actions = n
 
     def updateNumObservations(self, n):
+        """ Updates the length of the observation vector """
         self.n_obs = n
+
+    def isWarmupComplete(self):
+        """ Checks if the warmup is complete """
+        retval = False
+        if self.episodes_warmed_up_ >= self.n_warmup:
+            retval = True
+        return retval
 
     def isAgentDone(self, agentID):
         """ Checks if the agent with the specified ID is done """

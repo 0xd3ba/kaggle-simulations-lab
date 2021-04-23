@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (
 import gui.workers as gui_worker               # Module containing the thread specific classes
 import config.algorithmsConfig as acfg         # Module containing algorithm configuration information
 import config.windowConfig as winw             # Module containing window configuration information
-import utils.dispatcher as udispatch           # Module containing the dispatcher
+import utils.foldersPrep as fprep              # Module containing the directory information
 
 # Constants for dialog titles
 import utils.nn
@@ -39,7 +39,7 @@ DIALOG_TEXTBOX_TRAIN_CONFIG = 'Starting TensorBoard server ...'
 
 # Constant for tensorboard
 # The command needs to be appended with the log-directory
-DIALOG_TENSORBOARD_LABEL = 'Execute the command on terminal to start TensorBoard server '
+DIALOG_TENSORBOARD_LABEL = 'Execute the command on terminal to start TensorBoard server'
 DIALOG_TENSORBOARD_CMD = 'tensorboard --logdir '
 DIALOG_TENSORBOARD_COPY = 'Copy Command'
 
@@ -198,15 +198,20 @@ class TrainingDialog(QDialog):
         """ Writes the configuration information to the left text box """
         fmt_config = [
             '<html><head/><body>',  # Opening tag
-            None,                   # 1. Workspace directory
-            None,                   # 2. The title of the competition
-            None,                   # 3. Algorithm that is being used
-            None,                   # 4. Number of layers
-            None,                   # 5. Layer configuration (units per-layer and activations)
-            None,                   # 6. Optimizer that is being used
-            None,                   # 7. Learning rate
-            None,                   # 8. Number of training epochs
-            None,                   # 9. How often is the best model updated, i.e. model update interval
+            None,                   # 1.  Workspace directory
+            None,                   # 2.  The title of the competition
+            None,                   # 3.  Algorithm that is being used
+            None,                   # 4.  Number of layers
+            None,                   # 5.  Layer configuration (units per-layer and activations)
+            None,                   # 6.  Optimizer that is being used
+            None,                   # 7.  Learning rate
+            None,                   # 8.  Number of training epochs
+            None,                   # 9.  How often is the model saved, i.e. checkpoint interval
+            None,                   # 10. Number of warmup episodes
+            None,                   # 11. Self-play update interval, i.e. how often clones are updated
+            None,                   # 12. Model update delta, i.e. probability of clone not being updated
+            None,                   # 13. Evaluation interval, i.e. how often there is a showdown
+            None,                   # 14. Evaluation episodes, i.e. how many episodes in a showdown
             '</body></html>'        # Closing tag
         ]
 
@@ -221,8 +226,13 @@ class TrainingDialog(QDialog):
 
         fmt_config[6] = f'<p> <b>Optimizer: </b> {self.config[acfg.KEY_OPTIM]} </p>'
         fmt_config[7] = f'<p> <b>Learning Rate: </b> {self.config[acfg.KEY_LEARN_RATE]} </p>'
-        fmt_config[8] = f'<p> <b>Training Epochs: </b> {self.config[acfg.KEY_NUM_EPISODES]} </p>'
-        fmt_config[9] = f'<p> <b>Update Interval: </b> {self.config[acfg.KEY_UPDATE_INT]} </p>'
+        fmt_config[8] = f'<p> <b>Training Episodes: </b> {self.config[acfg.KEY_NUM_EPISODES]} </p>'
+        fmt_config[9] = f'<p> <b>Warmup Episodes: </b> {self.config[acfg.KEY_NUM_WARMUP]} </p>'
+        fmt_config[10] = f'<p> <b>Self-play Update Interval: </b> {self.config[acfg.KEY_SELF_PLAY_EP]} </p>'
+        fmt_config[11] = f'<p> <b>Self-play Update Delta: </b> {self.config[acfg.KEY_SELF_PLAY_DELTA]} </p>'
+        fmt_config[12] = f'<p> <b>Evaluation Interval: </b> {self.config[acfg.KEY_EVAL_INTERVAL]} </p>'
+        fmt_config[13] = f'<p> <b>Evaluation Episodes: </b> {self.config[acfg.KEY_EVAL_EPISODES]} </p>'
+        fmt_config[14] = f'<p> <b>Checkpoint Interval: </b> {self.config[acfg.KEY_CHKPT_INT]} </p>'
 
         fmt_config_str = '\n'.join(fmt_config)
         self.configInfoTextBox.setText(fmt_config_str)
@@ -231,7 +241,7 @@ class TrainingDialog(QDialog):
     def createTensorBoardLinkBox(self):
         """ Creates the box that contains the tensorboard server link """
         workspace_dir = self.config[acfg.KEY_WORKSPACE]
-        log_dir = os.path.join(workspace_dir, udispatch.LOG_DIR)
+        log_dir = os.path.join(workspace_dir, fprep.PrepareFolders.LOG_DIR)
         tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir
 
         # For monospaced font in the command

@@ -31,9 +31,11 @@ KEY_NUM_EPISODES    = 'num_episodes'
 KEY_NUM_WARMUP      = 'num_warmup_episodes'
 KEY_SELF_PLAY_EP    = 'self_play_ep_per_update'
 KEY_SELF_PLAY_DELTA = 'self_play_delta'
-KEY_UPDATE_INT      = 'checkpoint_interval'
+KEY_CHKPT_INT       = 'checkpoint_interval'
 KEY_UNITS_LIST      = 'units_list'
 KEY_ACTIV_LIST      = 'activations_list'
+KEY_EVAL_INTERVAL   = 'evaluation_interval'
+KEY_EVAL_EPISODES   = 'evaluation_episodes'
 KEY_WORKSPACE       = 'workspace'
 
 
@@ -43,11 +45,13 @@ ALGO_DEF_NUM_LAYERS     = 2
 ALGO_DEF_NUM_AGENTS     = 2
 ALGO_DEF_NUM_EPISODES   = 10
 ALGO_DEF_NUM_WARMUP     = 0
-ALGO_DEF_UPDATE_INT     = 2
+ALGO_DEF_CHKPT_INT      = 2
 ALGO_DEF_SPLAY_EPISODES = 10
 ALGO_DEF_SPLAY_DELTA    = 0.01
 ALGO_DEF_NUM_UNITS      = 32
 ALGO_DEF_ACTIVATION     = 'ReLU'
+ALGO_DEF_EVAL_INTERVAL  = 10
+ALGO_DEF_EVAL_EPISODES  = 50
 
 
 def get_agent(agent_name):
@@ -73,6 +77,8 @@ class AlgoConfig:
         self.layerList = None
         self.workspace = None
         self.numAgents = None
+        self.evalInterval = None
+        self.evalEpisodes = None
 
     # *****************************************
     # Setter methods for the instance variables
@@ -107,6 +113,12 @@ class AlgoConfig:
 
     def setSelfPlayDelta(self, delta):
         self.splayDelta = delta
+
+    def setEvaluationInterval(self, interval):
+        self.evalInterval = interval
+
+    def setEvaluationEpisodes(self, episodes):
+        self.evalEpisodes = episodes
 
     def setUpdateInterval(self, uInterval):
         self.uInterval = uInterval
@@ -156,6 +168,12 @@ class AlgoConfig:
     def getSelfPlayDelta(self):
         return self.splayDelta
 
+    def getEvaluationInterval(self):
+        return self.evalInterval
+
+    def getEvaluationEpisodes(self):
+        return self.evalEpisodes
+
     def getUpdateInterval(self):
         return self.uInterval
 
@@ -188,7 +206,9 @@ class AlgoConfig:
             KEY_NUM_WARMUP:      self.getNumWarmupEpisodes(),
             KEY_SELF_PLAY_EP:    self.getSelfPlayUpdateEpisodes(),
             KEY_SELF_PLAY_DELTA: self.getSelfPlayDelta(),
-            KEY_UPDATE_INT:      self.getUpdateInterval(),
+            KEY_CHKPT_INT:       self.getUpdateInterval(),
+            KEY_EVAL_EPISODES:   self.getEvaluationEpisodes(),
+            KEY_EVAL_INTERVAL:   self.getEvaluationInterval(),
             KEY_WORKSPACE:       self.getWorkspace(),
             KEY_UNITS_LIST:      unitsList,
             KEY_ACTIV_LIST:      actvsList
@@ -214,14 +234,20 @@ class AlgoConfig:
         if configData[KEY_LEARN_RATE] is None:
             configData[KEY_LEARN_RATE] = ALGO_DEF_LEARN_RATE
 
-        if configData[KEY_UPDATE_INT] is None:
-            configData[KEY_UPDATE_INT] = ALGO_DEF_UPDATE_INT
+        if configData[KEY_CHKPT_INT] is None:
+            configData[KEY_CHKPT_INT] = ALGO_DEF_CHKPT_INT
 
         if configData[KEY_SELF_PLAY_EP] is None:
             configData[KEY_SELF_PLAY_EP] = ALGO_DEF_SPLAY_EPISODES
 
         if configData[KEY_SELF_PLAY_DELTA] is None:
             configData[KEY_SELF_PLAY_DELTA] = ALGO_DEF_SPLAY_DELTA
+
+        if configData[KEY_EVAL_INTERVAL] is None:
+            configData[KEY_EVAL_INTERVAL] = ALGO_DEF_EVAL_INTERVAL
+
+        if configData[KEY_EVAL_EPISODES] is None:
+            configData[KEY_EVAL_EPISODES] = ALGO_DEF_EVAL_EPISODES
 
         if configData[KEY_WORKSPACE] is None:
             configData[KEY_WORKSPACE] = os.path.abspath(os.curdir)

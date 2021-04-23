@@ -41,14 +41,14 @@ class DeepQNetwork(Agent):
         """ Return the name of this agent, i.e. Deep Q-Network """
         return 'Deep Q-Network'
 
-    def predict_action(self, state):
+    def predict_action(self, state, eval=False):
         """ Returns an action -- Predicts it from the state """
         env = self.get_environment()
         state = torch.tensor(state, dtype=torch.float)
         q_vals = self.network(state).detach()
 
         # Sample a random action if we are still exploring, then decay the exploration rate
-        if np.random.uniform() < self.epsilon:
+        if np.random.uniform() < self.epsilon and eval:
             self.epsilon *= self.epsilon_decay
             action = np.random.choice(env.getNumActions())
         else:
@@ -56,28 +56,30 @@ class DeepQNetwork(Agent):
 
         return action
 
-    def play_one_episode(self):
+    def play_one_episode(self, eval=False):
         """ Responsible for playing one episode and storing the experience obtained into the memory """
         network = self.get_network()
         env = self.get_environment()
         curr_state = env.reset()
-        done = False
-        won = False
-        cumm_reward = 0
+        done = False        # Is the game finished yet ?
+        won = False         # Did we win ?
+        total_steps = 0     # Number of steps before game was finished
+        total_reward = 0    # Total reward (cumulative) we got in the episode
 
         while not done:
-            action = self.predict_action(curr_state)
+            action = self.predict_action(curr_state, eval)
 
             # Now take an action and get the appropriate rewards and next state
             next_state, reward, done, won, _ = env.step(action)
-            cumm_reward += reward
+            total_reward += reward
 
             # Save the experience obtained into the buffer
             self.buffer.store(curr_state, action, reward, next_state, done)
 
             curr_state = next_state
+            total_steps += 1
 
-        return cumm_reward, won
+        return total_reward, total_steps, won
 
     def train(self):
         """ Responsible for training the network """
@@ -119,4 +121,5 @@ class DeepQNetwork(Agent):
 
         self._steps_trained += 1
         if self._steps_trained > self._steps_threshold:
+            self._steps_threshold = 0
             self.target_net.load_state_dict(self.network.state_dict())

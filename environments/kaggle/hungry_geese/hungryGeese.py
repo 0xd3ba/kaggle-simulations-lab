@@ -7,31 +7,6 @@ from kaggle_environments.envs.hungry_geese import hungry_geese
 # Custom module for supporting self-play
 from environments.selfplay import SelfPlay
 
-HUNGRY_GEESE_TITLE    = "Hungry Geese"
-HUNGRY_GEESE_SUBTITLE = "Dont. Stop. Eating."
-HUNGRY_GEESE_LINK     = "https://www.kaggle.com/c/hungry-geese"
-HUNGRY_GEESE_INFO     = [
-    """
-    Whether it be in an arcade, on a phone, as an app, on a computer, or maybe stumbled upon in a web search, many 
-    of us have likely developed fond memories playing a version of Snake. It’s addicting to control a slithering 
-    serpent and watch it grow along the grid until you make one… wrong… move. Then you have to try again because 
-    surely you won’t make the same mistake twice!
-    """,
-
-    """
-    With Hungry Geese, Kaggle has taken this classic in the video game industry and put a multi-player, simulation 
-    spin to it. You will create an AI agent to play against others and survive the longest. You must make sure your 
-    goose doesn’t starve or run into other geese; it’s a good thing that geese love peppers, donuts, and pizza—which 
-    show up across the board.
-    """,
-
-    """
-    Extensive research exists in building Snake models using reinforcement learning, Q-learning, neural networks, 
-    and more (maybe you’ll use… Python?). Take your grid-based reinforcement learning knowledge to the next level 
-    with this exciting new challenge!
-    """
-]
-
 
 class HungryGeese(SelfPlay):
     """ Class for Hungry Geese environment """
@@ -47,13 +22,19 @@ class HungryGeese(SelfPlay):
     OPPONENT_GEESE_TAIL_MARKER = -1
     FOOD_MARKER = 4
 
-    def __init__(self, n_agents):
-        super().__init__(n_agents)
+    def __init__(self, n_agents, n_warmup):
+        super().__init__(n_agents, n_warmup)
 
         self.env = kaggle_env.make(self.HUNGRY_GEESE_ENV_NAME)
         self.minFood = self.env.configuration['min_food']   # Minimum number of food on the board
         self.nRows = self.env.configuration['rows']         # Number of rows on the board
         self.nCols = self.env.configuration['columns']      # Number of columns on the board
+        self.we_won = False                                 # Did we win the game
+
+        # The warmup bot -- Intially the model is trained against these bots
+        # The idea is, we want our agent to get a good start
+        self.warmupBots = [hungry_geese.GreedyAgent(self.env.configuration) if i != self.getOurAgentIndex()
+                           else None for i in range(n_agents)]
 
         # There are 4 actions: NORTH, EAST, SOUTH, WEST
         # And they all are strings. Stepping through the environment needs the actions to be
@@ -82,8 +63,17 @@ class HungryGeese(SelfPlay):
             of our agent. We need to tweak this to get the name of the actions
         """
         our_index = self.getOurAgentIndex()
-        actions_list = self.getActionsList(action, self.board)
-        actions_list = [self.actions[a] for a in actions_list]
+
+        if self.isWarmupComplete():
+            actions_list = self.getActionsList(action, self.board)
+            actions_list = [self.actions[a] if a is not None else None for a in actions_list]
+        else:
+            # Note that the actions provided by the bots are already decoded strings
+            # We don't need to decode them !
+            actions_list = self._getWarmupBotsActions()
+
+        # Finally add our own action to the list
+        actions_list[our_index] = self.actions[action]
 
         obs = self.env.step(actions_list)
         self.updateCurrentObservation(obs)
@@ -97,7 +87,11 @@ class HungryGeese(SelfPlay):
         reward = self.getReward(our_index)
         reward = self._tweak_reward(reward)
 
-        return self.board[our_index], reward, done, info
+        if done:
+            self.we_won = not we_lost
+            self.updateWarmupCounter()
+
+        return self.board[our_index], reward, done, self.we_won, info
 
 
     # *****************************************
@@ -139,7 +133,6 @@ class HungryGeese(SelfPlay):
         # All done -- Return
 
 
-
     def _get_agent_positions(self):
         """ Returns a list of positions of all the agents on the board """
         obs = self.getObservation()
@@ -152,7 +145,16 @@ class HungryGeese(SelfPlay):
 
     def _tweak_reward(self, reward):
         """ Tweaks the reward accordingly -- Depending on the tweak, the agent will perform better/worse """
-        return reward    # For now, simply return an identity mapping
+        reward = int(np.log10(reward + 1))  # Convert to log-scale because the rewards get extremely large
+        return reward
 
+    def _getWarmupBotsActions(self):
+        """ Get the actions from the warmup bots """
+        obs = self.getObservation()
+        obs = hungry_geese.Observation(obs)
 
+        actions = [bot(obs) if bot is not None else None for bot in self.warmupBots]
+
+        # NOTE: The actions are already decoded, i.e. they are string names !
+        return actions
 

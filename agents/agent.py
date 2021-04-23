@@ -64,11 +64,11 @@ class Agent:
         """ Returns the name of the agent, i.e. algorithm (used for displaying on GUI) """
         raise NotImplementedError
 
-    def predict_action(self, state):
+    def predict_action(self, state, eval=False):
         """ Returns an action by predicting it from the state """
         raise NotImplementedError
 
-    def play_one_episode(self):
+    def play_one_episode(self, eval=False):
         """ Plays one episode until the end of the episode """
         raise NotImplementedError
 

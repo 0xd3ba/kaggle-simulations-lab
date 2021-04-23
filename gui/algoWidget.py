@@ -29,8 +29,11 @@ GUI_LABEL_MODEL_UPDATE    = 'Checkpoint Interval'
 GUI_LABEL_SELF_PLAY       = 'Self-Play Update Interval'
 GUI_LABEL_SELF_PLAY_DELTA = 'Self-Play Update Delta'
 GUI_BUTTON_CONFIG_LAYER   = 'Configure'
+GUI_LABEL_EVAL_INTERVAL   = 'Evaluation Interval'
+GUI_LABEL_EVAL_EPISODES   = 'Evaluation Episodes'
 GUI_LEARNRATE_PRECISION   = 9
 GUI_LEARNRATE_STEP        = 1e-9
+GUI_NUM_EPISODES_MAX      = 1e9
 
 
 class AlgoWidget(QWidget):
@@ -54,6 +57,7 @@ class AlgoWidget(QWidget):
         self.createWarmupEpisodes()         # Create the warmup episodes selection widget
         self.createSelfPlayUpdate()         # Create the number of episodes before each self-play update widget
         self.createSelfPlayDelta()          # Create the delta parameter for self-play update widget
+        self.createEvaluation()             # Create the widgets responsible for setting evaluation parameters
         self.createModelUpdateInterval()    # Create the update interval widgets
 
 
@@ -128,6 +132,7 @@ class AlgoWidget(QWidget):
         self.numEpisodesBox = QSpinBox()
 
         self.numEpisodesBox.setMinimum(1)     # Set the minimum number of training epochs to 1
+        self.numEpisodesBox.setMaximum(GUI_NUM_EPISODES_MAX)
 
         # Connect the handler for change in episode value
         self.numEpisodesBox.valueChanged.connect(self.numEpisodesHandler)
@@ -142,6 +147,7 @@ class AlgoWidget(QWidget):
         self.warmupBox = QSpinBox()
 
         self.warmupBox.setMinimum(0)    # Lower bound on the number of warmup episodes
+        self.warmupBox.setMaximum(GUI_NUM_EPISODES_MAX)
 
         # Connect the handler for change in warmup episodes
         self.warmupBox.valueChanged.connect(self.numWarmupEpisodesHandler)
@@ -180,6 +186,32 @@ class AlgoWidget(QWidget):
         self.mainLayout.addWidget(self.selfPlayDeltaLabel, 9, 0, 1, 1)
 
 
+    def createEvaluation(self):
+        """ Creates the two spinboxes corresponding to evaluation interval and evaluation episodes """
+        self.evalIntervalLabel = QLabel(GUI_LABEL_EVAL_INTERVAL)
+        self.evalEpisodesLabel = QLabel(GUI_LABEL_EVAL_EPISODES)
+        self.evalInterval = QSpinBox()
+        self.evalEpisodes = QSpinBox()
+
+        # Set the minimum and maximum values respectively
+        self.evalInterval.setMinimum(0)
+        self.evalInterval.setMaximum(GUI_NUM_EPISODES_MAX)
+        self.evalEpisodes.setMinimum(0)
+        self.evalEpisodes.setMaximum(GUI_NUM_EPISODES_MAX)
+
+        # Connect them to their respective handlers
+        self.evalInterval.valueChanged.connect(self.evalIntervalHandler)
+        self.evalEpisodes.valueChanged.connect(self.evalEpisodesHandler)
+
+        # Add them to the layout
+        self.mainLayout.addWidget(self.evalIntervalLabel, 10, 0, 1, 1)
+        self.mainLayout.addWidget(self.evalInterval, 10, 1, 1, 3)
+
+        self.mainLayout.addWidget(self.evalEpisodesLabel, 11, 0, 1, 1)
+        self.mainLayout.addWidget(self.evalEpisodes, 11, 1, 1, 3)
+
+
+
     def createModelUpdateInterval(self):
         """ Creates the appropriate widgets for setting up the model update interval """
         self.modelUpdateLabel = QLabel(GUI_LABEL_MODEL_UPDATE)
@@ -191,8 +223,8 @@ class AlgoWidget(QWidget):
         # Connect it to its respective handler
         self.modelUpdateBox.valueChanged.connect(self.intervalUpdateHandler)
 
-        self.mainLayout.addWidget(self.modelUpdateLabel, 10, 0, 1, 1)
-        self.mainLayout.addWidget(self.modelUpdateBox, 10, 1, 1, 3)
+        self.mainLayout.addWidget(self.modelUpdateLabel, 12, 0, 1, 1)
+        self.mainLayout.addWidget(self.modelUpdateBox, 12, 1, 1, 3)
 
 
     # *****************************************
@@ -268,3 +300,13 @@ class AlgoWidget(QWidget):
     def intervalUpdateHandler(self, interval):
         """ Handler for updating the change in the model update interval """
         self.algoConfig.setUpdateInterval(interval)
+
+
+    def evalIntervalHandler(self, interval):
+        """ Handler for updating the evaluation interval """
+        self.algoConfig.setEvaluationInterval(interval)
+
+
+    def evalEpisodesHandler(self, episodes):
+        """ Handler for updating the number of evaluation episodes """
+        self.algoConfig.setEvaluationEpisodes(episodes)

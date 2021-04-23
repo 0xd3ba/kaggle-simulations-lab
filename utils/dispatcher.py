@@ -1,56 +1,10 @@
 # This module takes care of starting the training loop
 
-import os
-import sys
-import time
-
 import config.algorithmsConfig as acfg
 import config.environmentConfig as ecfg
-import utils.nn as unn  # Module for building a neural network
-import utils.trainer as utrainer  # Module for training
-
-# Keys for directory names (also used as directory names, except ROOT_DIR)
-ROOT_DIR = 'root_dir'
-LOG_DIR = 'logs'  # Directory storing the TensorBoard logs
-CHKPT_DIR = 'saved_models'  # Directory storing the models at checkpoints
-
-# Status codes for returning the status of the dispatch
-SUCCESS = 0  # Warning: Don't change this value
-FAILED = -1
-
-DISPATCH_ERR_INVAL_DIR = "Invalid Path. Check if the directory exists or you have write permission"
-
-
-# *******************************************************************
-# WARNING: Assumption is made that the directories can be created
-# TODO: Handle the case when they can't be created later
-# *******************************************************************
-def _tryCreatingDirectory(environ, parentDir):
-    """ Try creating the directory inside the given directory path (from the GUI) """
-
-    currTime = time.asctime()  # Day Month Date Time Year
-    dirName = f'{environ}-{currTime}'  # EnvironmentName-{Day Month Date ...etc }
-
-    rootDirPath = os.path.join(parentDir, dirName)  # Path to the directory where we'll be working
-    logDirPath = os.path.join(rootDirPath, LOG_DIR)  # Path to the directory for storing TensorBoard logs
-    modelDirPath = os.path.join(rootDirPath, CHKPT_DIR)  # Path to the directory for storing models
-
-    try:
-        os.mkdir(rootDirPath)  # Create the main directory
-        os.mkdir(logDirPath)  # Create the log directory
-        os.mkdir(modelDirPath)  # Create the model directory
-
-    except OSError:
-        return FAILED, None  # Couldn't create one or more directories, fail the dispatch
-
-    # The dictionary for the directories
-    dirsDict = {
-        ROOT_DIR: rootDirPath,
-        LOG_DIR: logDirPath,
-        CHKPT_DIR: modelDirPath
-    }
-
-    return SUCCESS, dirsDict
+import utils.nn as unn              # Module for building a neural network
+import utils.trainer as utrainer    # Module for training
+import utils.foldersPrep as fprep   # Module for creating the directories
 
 
 # *****************************************
@@ -58,7 +12,6 @@ def _tryCreatingDirectory(environ, parentDir):
 # environment ... etc before starting the
 # training loop
 # *****************************************
-
 def dispatcher(configData, worker):
 
     env_name = configData[acfg.KEY_ENVIRONMENT]
@@ -69,16 +22,15 @@ def dispatcher(configData, worker):
     activ_list = configData[acfg.KEY_ACTIV_LIST]
     optim = configData[acfg.KEY_OPTIM]
     learn_rate = configData[acfg.KEY_LEARN_RATE]
+    n_warmup = configData[acfg.KEY_NUM_WARMUP]
 
-    # TODO: Create a separate class to do this job
-    # First create the directories that will be used to save stuff during training
-    # status, createdDirs = _tryCreatingDirectory(env_name, env_workspace)
-    # if status:
-    #     return FAILED, [DISPATCH_ERR_INVAL_DIR]
+    # Create the directories, if possible
+    folder_prep = fprep.PrepareFolders(env_name=env_name, path=env_workspace)
+    folder_prep.prepare()
 
     # Create the environment
     training_env = ecfg.ENV_MAP[env_name].getEnvironment()
-    training_env = training_env(n_agents)
+    training_env = training_env(n_agents, n_warmup)
 
     # Create the neural network
     network = unn.FeedForwardNet(ip_dim=training_env.getObservationLength(),
@@ -93,9 +45,12 @@ def dispatcher(configData, worker):
     agent = agent_class(env=training_env,
                         network=network,
                         optimizer=optimizer,
-                        model_dir=None, #createdDirs[CHKPT_DIR],
-                        log_dir=None) #createdDirs[LOG_DIR])
+                        model_dir=folder_prep.get_chkpt_dir(),
+                        log_dir=folder_prep.get_log_dir())
 
-    # TODO: Start the training loop (and start tensorboard as well)
-    trainer = utrainer.Trainer(worker_thread=worker, config_data=configData, agent=agent)
+    trainer = utrainer.Trainer(worker_thread=worker,
+                               config_data=configData,
+                               agent=agent)
+
+    # Everything is ready. Start the training loop
     trainer.start()

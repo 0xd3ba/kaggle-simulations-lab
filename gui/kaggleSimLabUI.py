@@ -92,19 +92,6 @@ class KaggleSimLabUI(QMainWindow):
         configData = self.algoWidget.algoConfig.checkAndUpdateConfigData(configData)
 
         self.trainDialog = TrainingDialog(self, configData)
-
-        # Now invoke dispatcher that will take care of the rest of the stuff
-        # status, messages = udispatch.dispatcher(configData,
-        #                                         self.trainDialog.trainingInfoTextBox,
-        #                                         self.trainDialog.progressBar)
-        #
-        # if status:                          # Non-zero status indicates some error has occurred
-        #     self.trainDialog = None         # Remove the reference
-        #     errDialog = ErrorDialog(self, messages)
-        #     _ = errDialog.exec_()           # A reference to the button that was clicked is returned
-        #     errDialog.close()
-        # else:
-
         self.trainDialog.exec_()
 
         # Execution of the main widget pauses until the dialog is closed
