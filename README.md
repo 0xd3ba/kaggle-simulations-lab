@@ -13,7 +13,7 @@ All you have to do is:
 
 | Environment   |      Supported yet ?     |
 |----------|:-------------|
-| [Hungry Geese](https://www.kaggle.com/c/hungry-geese) |  ❌️️ |
+| [Hungry Geese](https://www.kaggle.com/c/hungry-geese) |  ✔️️️ |
 | [Rock, Paper, Scissors](https://www.kaggle.com/c/rock-paper-scissors) |  ❌️ |
 | [Connect-X](https://www.kaggle.com/c/connectx) |  ❌️ |
 | [Halite by Two Sigma (Playground Edition)](https://www.kaggle.com/c/halite-iv-playground-edition) |  ❌️ |

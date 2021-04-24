@@ -1,9 +1,15 @@
 {
   "title": "Kaggle Simulations Lab",
-  "subTitle": "Build. Experiment. Compete.",
+  "subTitle": "Build. Train. Compete.",
   "description": [
-    "Description of the environment (if any)",
-    "Each paragraph must be a entry in this list"
+    "Build and experiment with a wide variety of deep Reinforcement Learning agents for various Kaggle Simulation competitions, with only a few clicks !",
+    "All you have to do is:",
+    " - Choose your environment",
+    " - Choose your algorithm",
+    " - Configure your Neural-Network",
+    " - Train your agent \uD83D\uDE0E",
+    "",
+    "Visit the Github repository (click the title) for more information on usage"
   ],
   "link": "https://github.com/0xd3ba/kaggle-simulations-lab",
   "supported": false,
