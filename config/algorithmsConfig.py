@@ -4,17 +4,20 @@
 import os
 
 # Custom algorithm imports
-from agents.a2c.a2c import A2C
-from agents.a3c import A3C
+# from agents.a2c.a2c import A2C
+# from agents.a3c import A3C
+# from agents.ddqn.doubleDeepQNetwork import DoubleDeepQNetwork
+from agents.ce.crossEntropyMethod import CrossEntropyMethod
 from agents.dqn.deepQNetwork import DeepQNetwork
-from agents.ddqn.doubleDeepQNetwork import DoubleDeepQNetwork
 from agents.reinforce.reinforce import REINFORCE
 
 
 # List of algorithms supported
 # Supporting a new algorithm only needs an entry added into this.
 ALGO_LIST = [
+    CrossEntropyMethod,
     DeepQNetwork,
+    REINFORCE
 ]
 
 # Create the mappings between names of the algorithms and their classes

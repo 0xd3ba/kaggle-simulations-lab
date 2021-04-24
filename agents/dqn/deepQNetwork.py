@@ -58,7 +58,6 @@ class DeepQNetwork(Agent):
 
     def play_one_episode(self, eval=False):
         """ Responsible for playing one episode and storing the experience obtained into the memory """
-        network = self.get_network()
         env = self.get_environment()
         curr_state = env.reset()
         done = False        # Is the game finished yet ?
@@ -74,7 +73,8 @@ class DeepQNetwork(Agent):
             total_reward += reward
 
             # Save the experience obtained into the buffer
-            self.buffer.store(curr_state, action, reward, next_state, done)
+            if not eval:
+                self.buffer.store(curr_state, action, reward, next_state, done)
 
             curr_state = next_state
             total_steps += 1

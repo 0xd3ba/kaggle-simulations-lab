@@ -1,4 +1,4 @@
-# This module implements the REINFORCE policy gradient algorithm
+# This module implements the Cross-Entropy Method algorithm
 
 import numpy as np
 import torch
@@ -8,42 +8,37 @@ import torch.nn.functional as F
 from agents.agent import Agent
 
 
-class REINFORCE(Agent):
-    """ Class for REINFORCE algorithm """
+class CrossEntropyMethod(Agent):
+    """ Class for Cross-Entropy Method algorithm """
 
     def __init__(self, env, network, optimizer, model_dir, log_dir):
         super().__init__(env, network, optimizer, model_dir, log_dir)
-        self.rewards = []
-        self.log_probs = []
+        self.actions = []           # The action taken in the environment
+        self.rewards = []           # The reward got for taking the action
+        self.observations = []      # The states of the environment
+
 
     @staticmethod
     def get_acronym():
         """ Return the name (acronym) of this agent, i.e. reinforce """
-        return 'reinforce'
+        return 'ce-method'
 
     @staticmethod
     def get_name():
         """ Return the name of this agent, i.e. REINFORCE """
-        return 'REINFORCE'
+        return 'Cross-Entropy Method'
 
     def predict_action(self, state, eval=False):
         """ Predicts an action given the observations """
         env = self.get_environment()
-
         state = torch.tensor(state, dtype=torch.float)      # Shape (observation_len, )
 
-        # Important: Do not detach from the computation graph. They will be required to back-propagate
         scores = self.network(state)                        # Shape (n_actions, )
         action_probs = F.softmax(scores, dim=-1)            # Shape (n_actions, )
 
         # Create a categorical distribution from the probabilities and sample an action from it
         dist = torch.distributions.Categorical(action_probs)
         action = dist.sample().item()
-
-        # Store the log probability of the selected action
-        # Reward will be appended by the parent
-        if not eval:
-            self.log_probs.append(torch.log(action_probs[action]))
 
         return action
 
@@ -63,9 +58,10 @@ class REINFORCE(Agent):
             next_state, reward, done, won, _ = env.step(action)
             total_reward += reward
 
-            # Save the reward obtained. Log probabilities of the action was aleady saved
-            # in the call to predict action
+            # Save the current state, action and the reward obtained.
             if not eval:
+                self.observations.append(curr_state)
+                self.actions.append(action)
                 self.rewards.append(reward)
 
             curr_state = next_state
@@ -78,12 +74,13 @@ class REINFORCE(Agent):
 
         optimizer = self.get_optimizer()
 
-        # Calculate the discounted rewards and then the loss
-        disc_rewards = self._get_discounted_rewards()
-        log_probs = torch.stack(self.log_probs)
+        actions = torch.tensor(self.actions, dtype=torch.long)
+        observations = torch.tensor(self.observations, dtype=torch.float32)
 
-        loss = (disc_rewards * log_probs).sum()
-        loss = -loss            # We need to do a gradient ascent step
+        # Do a forward pass again, but on the batch of observations
+        scores = self.network(observations)
+        loss = F.cross_entropy(scores, actions)
+        loss = -loss            # Need to do a gradient ascent
 
         # Back-propagate the loss
         optimizer.zero_grad()
@@ -107,5 +104,6 @@ class REINFORCE(Agent):
 
     def _memory_reset(self):
         """ Clears the memory, i.e. rewards and log probabilities """
+        self.actions = []
         self.rewards = []
-        self.log_probs = []
+        self.observations = []

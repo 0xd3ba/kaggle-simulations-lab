@@ -220,7 +220,7 @@ class AlgoWidget(QWidget):
 
 
         self.modelUpdateBox.setMinimum(1)   # Set the minimum number of interval to 1
-        self.modelUpdateBox.setMinimum(GUI_NUM_EPISODES_MAX)
+        self.modelUpdateBox.setMaximum(GUI_NUM_EPISODES_MAX)
 
         # Connect it to its respective handler
         self.modelUpdateBox.valueChanged.connect(self.intervalUpdateHandler)
