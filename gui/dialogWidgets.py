@@ -1,11 +1,7 @@
 # This module contains custom dialog widgets for the GUI
 import os
 import pyperclip
-from PyQt5.QtCore import (
-    QObject,
-    QThread,
-    pyqtSignal
-)
+from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QDialog,
@@ -25,7 +21,7 @@ from PyQt5.QtWidgets import (
 import gui.workers as gui_worker               # Module containing the thread specific classes
 import config.algorithmsConfig as acfg         # Module containing algorithm configuration information
 import config.windowConfig as winw             # Module containing window configuration information
-import utils.foldersPrep as fprep              # Module containing the directory information
+import utils.trainer as trainer                # Module containing the trainer class, used here for extracting the stats
 
 # Constants for dialog titles
 import utils.nn
@@ -35,7 +31,7 @@ DIALOG_TITLE_TRAINING  = 'Training the agent ...'
 DIALOG_TITLE_ERROR_MSG = 'Error(s) have occurred'
 
 # Constant for dialog textbox
-DIALOG_TEXTBOX_TRAIN_CONFIG = 'Starting TensorBoard server ...'
+DIALOG_TEXTBOX_STATS_HEADER = 'Performance Summary'
 
 # Constant for tensorboard
 # The command needs to be appended with the log-directory
@@ -175,12 +171,26 @@ class LayerConfigDialog(QDialog):
 class TrainingDialog(QDialog):
     """ Class responsible for creating the (animated) algorithm training dialog """
 
+    # Dictionary storing the training statistics
+    TRAINING_STATS = {
+        trainer.Trainer.EPOCH_KEY: '--',
+        trainer.Trainer.TOTAL_TRAIN_WINS_KEY: '--',
+        trainer.Trainer.TOTAL_TRAIN_REWARD_KEY: '--',
+        trainer.Trainer.TOTAL_TRAIN_STEPS_KEY: '--',
+        trainer.Trainer.WIN_RATE_KEY: '--',
+        trainer.Trainer.AVG_SHOWDOWN_REWARD_KEY: '--',
+        trainer.Trainer.AVG_SHOWDOWN_STEPS_KEY: '--',
+        trainer.Trainer.SHOWDOWN_KEY: '--',
+    }
+
     def __init__(self, mainParent, config, *args, **kwargs):
         super().__init__(mainParent)
 
         self.setWindowTitle(DIALOG_TITLE_TRAINING)
         self.setMinimumWidth(winw.GUI_WDW_MIN_WIDTH)
         self.setMaximumWidth(winw.GUI_WDW_MAX_WIDTH)
+
+        self.resize(winw.GUI_WDW_MAX_WIDTH, winw.GUI_WDW_MAX_HEIGHT)
 
         self.parent = mainParent                    # Store a reference to the main parent widget
         self.config = config                        # The configuration information for the current training session
@@ -195,6 +205,8 @@ class TrainingDialog(QDialog):
         self.setLayout(self.mainLayout)
 
 
+    # Terrible way to do things -- For now it gets the job done
+    # TODO: Write a separate HTML class to do this job later on
     def _writeConfigInfo(self):
         """ Writes the configuration information to the left text box """
         fmt_config = [
@@ -216,6 +228,7 @@ class TrainingDialog(QDialog):
             '</body></html>'        # Closing tag
         ]
 
+        # Absolutely terrible way >:(
         fmt_config[1] = f'<p> <b>Workspace: </b> {self.config[acfg.KEY_WORKSPACE]} </p>'
         fmt_config[2] = f'<p> <b>Environment: </b> {self.config[acfg.KEY_ENVIRONMENT]} </p>'
         fmt_config[3] = f'<p> <b>Algorithm: </b> {self.config[acfg.KEY_ALGO]} </p>'
@@ -237,6 +250,44 @@ class TrainingDialog(QDialog):
 
         fmt_config_str = '\n'.join(fmt_config)
         self.configInfoTextBox.setText(fmt_config_str)
+
+    # Terrible way to do things -- For now it gets the job done
+    # TODO: Write a separate HTML class to do this job later on
+    def _write_performance_statistics(self):
+        """ Writes the statistics to the corresponding textbox """
+        head = f'''<p align="center"> <span style=" font-size:14pt;"> 
+                   -- {DIALOG_TEXTBOX_STATS_HEADER} -- <br/> </span> </a> </p>'''
+
+        fmt_stats = [
+            '<html><head/><body>',  # Opening tag
+            head,                   # 1.  Header for the dialog
+            '<br/>',                # 2.  Newline
+            None,                   # 3.  Epochs Complete / Total epochs
+            '<br/>',                # 4.  Newline
+            None,                   # 5.  Average reward till now
+            None,                   # 6.  Average steps till now
+            None,                   # 7.  Average wins till now
+            '<br/>',                # 8.  Newline
+            None,                   # 9.  Showdown number
+            None,                   # 10. Average win rate
+            None,                   # 11. Average reward
+            None,                   # 12. Average time steps
+            '</body></html>'        # 13. Closing tag
+        ]
+
+        # Absolutely terrible way >:(
+        fmt_stats[3] = f'''<p> <b>Episode: </b> {self.TRAINING_STATS[trainer.Trainer.EPOCH_KEY]} / 
+                        {self.config[acfg.KEY_NUM_EPISODES] + self.config[acfg.KEY_NUM_WARMUP]} </p>'''
+        fmt_stats[5] = f'<p> <b>Avg. Reward: </b> {self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_REWARD_KEY]} </p>'
+        fmt_stats[6] = f'<p> <b>Avg. Steps: </b> {self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_STEPS_KEY]} </p>'
+        fmt_stats[7] = f'<p> <b>Avg. Win %: </b> {self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_WINS_KEY]} </p>'
+        fmt_stats[9] = f'<p> <b>Evaluation #: </b> {self.TRAINING_STATS[trainer.Trainer.SHOWDOWN_KEY]} </p>'
+        fmt_stats[10] = f'<p> <b>Avg. Win %: </b> {self.TRAINING_STATS[trainer.Trainer.WIN_RATE_KEY]} </p>'
+        fmt_stats[11] = f'<p> <b>Avg. Reward: </b> {self.TRAINING_STATS[trainer.Trainer.AVG_SHOWDOWN_REWARD_KEY]} </p>'
+        fmt_stats[12] = f'<p> <b>Avg. Steps: </b> {self.TRAINING_STATS[trainer.Trainer.AVG_SHOWDOWN_STEPS_KEY]} </p>'
+
+        fmt_stats_str = '\n'.join(fmt_stats)
+        self.trainingInfoTextBox.setText(fmt_stats_str)
 
 
     def createTensorBoardLinkBox(self):
@@ -277,8 +328,9 @@ class TrainingDialog(QDialog):
     def createTrainingInfoTextBox(self):
         """ Creates the textbox widget that displays the statistics of the training """
         self.trainingInfoTextBox = QTextBrowser()
-        self.trainingInfoTextBox.setText(DIALOG_TEXTBOX_TRAIN_CONFIG)
         self.trainingInfoTextBox.setOpenExternalLinks(True)
+
+        self._write_performance_statistics()
 
         self.mainLayout.addWidget(self.trainingInfoTextBox, 2, 2, 1, 2)
 
@@ -330,7 +382,8 @@ class TrainingDialog(QDialog):
         self.worker_.signals.finished_signal.connect(self.trainingDone)
         self.worker_.signals.tensorboard_signal.connect(self.tensorBoardCommandUpdate)
         self.worker_.signals.progress_signal.connect(self.progressBarUpdate)
-        self.worker_.signals.textbox_signal.connect(self.trainingInfoUpdate)
+        self.worker_.signals.textbox_training_signal.connect(self.trainingInfoUpdate)
+        self.worker_.signals.textbox_showndown_signal.connect(self.showdownInfoUpdate)
 
         self.thread_.start()
 
@@ -341,7 +394,7 @@ class TrainingDialog(QDialog):
 
 
     def cancelButtonClicked(self):
-        """ Stops the algorithm, saves the model, stops tensorboard and closes """
+        """ Stops the algorithm and then closes """
         #TODO: Do the above mentioned stuff
         self.worker_.stop()
         self.close()
@@ -374,4 +427,41 @@ class TrainingDialog(QDialog):
 
     def trainingInfoUpdate(self, data):
         """ Updates the training information on the text box """
-        pass
+
+        # First extract the contents
+        avg_rewards = data[trainer.Trainer.TOTAL_TRAIN_REWARD_KEY]
+        avg_steps = data[trainer.Trainer.TOTAL_TRAIN_STEPS_KEY]
+        avg_wins = data[trainer.Trainer.TOTAL_TRAIN_WINS_KEY]
+        curr_epoch = data[trainer.Trainer.EPOCH_KEY]
+
+        # Update the common dictionary with the new values
+        self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_REWARD_KEY] = avg_rewards
+        self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_STEPS_KEY] = avg_steps
+        self.TRAINING_STATS[trainer.Trainer.TOTAL_TRAIN_WINS_KEY] = avg_wins
+        self.TRAINING_STATS[trainer.Trainer.EPOCH_KEY] = curr_epoch
+
+        self._write_performance_statistics()   # Update on the GUI
+
+
+    def showdownInfoUpdate(self, data):
+        """ Update the showdown information on the text box """
+
+        # First extract the contents
+        avg_rewards = data[trainer.Trainer.AVG_SHOWDOWN_REWARD_KEY]
+        avg_steps = data[trainer.Trainer.AVG_SHOWDOWN_STEPS_KEY]
+        avg_win_rate = data[trainer.Trainer.WIN_RATE_KEY]
+        curr_epoch = data[trainer.Trainer.EPOCH_KEY]
+        showdown_num = data[trainer.Trainer.SHOWDOWN_KEY]
+
+        # Update the common dictionary with the new values
+        self.TRAINING_STATS[trainer.Trainer.AVG_SHOWDOWN_REWARD_KEY] = avg_rewards
+        self.TRAINING_STATS[trainer.Trainer.AVG_SHOWDOWN_STEPS_KEY] = avg_steps
+        self.TRAINING_STATS[trainer.Trainer.WIN_RATE_KEY] = avg_win_rate
+        self.TRAINING_STATS[trainer.Trainer.EPOCH_KEY] = curr_epoch
+        self.TRAINING_STATS[trainer.Trainer.SHOWDOWN_KEY] = showdown_num
+
+        self._write_performance_statistics()   # Update on the GUI
+
+
+
+

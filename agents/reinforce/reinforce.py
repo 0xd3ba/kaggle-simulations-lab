@@ -48,7 +48,7 @@ class REINFORCE(Agent):
         env = self.get_environment()
         curr_state = env.reset()
         done = False      # Is the game finished yet ?
-        won = False       # Did we win ?
+        won = False       # Did we total_wins ?
         total_steps = 0   # Number of steps before game was finished
         total_reward = 0  # Total reward (cumulative) we got in the episode
 

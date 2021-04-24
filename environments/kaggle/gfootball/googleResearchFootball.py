@@ -1,13 +1,12 @@
-# This module contains the class for "Hungry-Geese" Kaggle competition
-#
+# This module contains the class for "Google Research Football" Kaggle competition
 
-from environments.environmentWrapper import EnvironmentWrapper
+# Custom module for supporting self-play
+from environments.selfplay import SelfPlay
 
-class GoogleResearchFootball(EnvironmentWrapper):
-    """ Class for Hungry Geese environment """
 
-    def __init__(self):
-        self.environmentName = GRESEARCH_FOOTBALL_TITLE
-        self.environmentSubtitle = GRESEARCH_FOOTBALL_SUBTITLE
-        self.competitionLink = GRESEARCH_FOOTBALL_LINK
-        self.description = self.buildDescription(GRESEARCH_FOOTBALL_INFO)
+class GoogleResearchFootball(SelfPlay):
+    """ Class for Google Research Football environment """
+
+    def __init__(self, n_agents, n_warmup, delta):
+        super().__init__(n_agents, n_warmup, delta)
+        # TODO: Write the code for supporting this environment later

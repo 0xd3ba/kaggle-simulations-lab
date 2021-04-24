@@ -29,7 +29,7 @@ class HungryGeese(SelfPlay):
         self.minFood = self.env.configuration['min_food']   # Minimum number of food on the board
         self.nRows = self.env.configuration['rows']         # Number of rows on the board
         self.nCols = self.env.configuration['columns']      # Number of columns on the board
-        self.we_won = False                                 # Did we win the game
+        self.we_won = False                                 # Did we total_wins the game
 
         # The warmup bot -- Intially the model is trained against these bots
         # The idea is, we want our agent to get a good start

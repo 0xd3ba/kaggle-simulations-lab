@@ -17,7 +17,7 @@ from agents.reinforce.reinforce import REINFORCE
 ALGO_LIST = [
     CrossEntropyMethod,
     DeepQNetwork,
-    REINFORCE
+    REINFORCE,
 ]
 
 # Create the mappings between names of the algorithms and their classes
