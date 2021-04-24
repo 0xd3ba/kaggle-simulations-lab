@@ -22,8 +22,8 @@ class HungryGeese(SelfPlay):
     OPPONENT_GEESE_TAIL_MARKER = -1
     FOOD_MARKER = 4
 
-    def __init__(self, n_agents, n_warmup):
-        super().__init__(n_agents, n_warmup)
+    def __init__(self, n_agents, n_warmup, delta):
+        super().__init__(n_agents, n_warmup, delta)
 
         self.env = kaggle_env.make(self.HUNGRY_GEESE_ENV_NAME)
         self.minFood = self.env.configuration['min_food']   # Minimum number of food on the board
@@ -80,7 +80,11 @@ class HungryGeese(SelfPlay):
         self._update_board()
 
         game_over = self.env.done
-        we_lost = self.isAgentDone(our_index) and not game_over
+        we_lost = self.isAgentDone(our_index) and (not game_over or self._our_goose_died())
+
+        # We lose if our agent is DONE and one of the two conditions hold:
+        #   - Game is not over yet
+        #   - Our goose died (need to include this as it is a corner case when n_agents=2)
 
         done = we_lost or game_over
         info = self.getInfo(our_index)
@@ -157,4 +161,16 @@ class HungryGeese(SelfPlay):
 
         # NOTE: The actions are already decoded, i.e. they are string names !
         return actions
+
+    def _our_goose_died(self):
+        """ Checks the length of our goose. If it's an empty list, it means our goose is dead """
+        died = True
+        our_index = self.getOurAgentIndex()
+        our_position = self._get_agent_positions()[our_index]
+
+        if our_position:    # Non-empty list means we are not dead
+            died = False
+
+        return died
+
 

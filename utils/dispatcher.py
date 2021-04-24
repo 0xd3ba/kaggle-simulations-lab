@@ -23,6 +23,7 @@ def dispatcher(configData, worker):
     optim = configData[acfg.KEY_OPTIM]
     learn_rate = configData[acfg.KEY_LEARN_RATE]
     n_warmup = configData[acfg.KEY_NUM_WARMUP]
+    splay_delta = configData[acfg.KEY_SELF_PLAY_DELTA]
 
     # Create the directories, if possible
     folder_prep = fprep.PrepareFolders(env_name=env_name, path=env_workspace)
@@ -30,7 +31,7 @@ def dispatcher(configData, worker):
 
     # Create the environment
     training_env = ecfg.ENV_MAP[env_name].getEnvironment()
-    training_env = training_env(n_agents, n_warmup)
+    training_env = training_env(n_agents, n_warmup, splay_delta)
 
     # Create the neural network
     network = unn.FeedForwardNet(ip_dim=training_env.getObservationLength(),

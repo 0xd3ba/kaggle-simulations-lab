@@ -35,7 +35,7 @@ class Trainer:
         showdown_episodes = self.config_data[acfg.KEY_EVAL_EPISODES]
 
         # Create the initial clones of itself before we begin training
-        env.updateAgents(self.agent)
+        env.setAgents(self.agent)
 
         for e in range(1, episodes + warmup_episodes + 1):
 

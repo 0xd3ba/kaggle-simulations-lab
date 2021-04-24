@@ -13,8 +13,9 @@ class REINFORCE(Agent):
 
     def __init__(self, env, network, optimizer, model_dir, log_dir):
         super().__init__(env, network, optimizer, model_dir, log_dir)
+        self.observations = []
+        self.actions = []
         self.rewards = []
-        self.log_probs = []
 
     @staticmethod
     def get_acronym():
@@ -40,11 +41,6 @@ class REINFORCE(Agent):
         dist = torch.distributions.Categorical(action_probs)
         action = dist.sample().item()
 
-        # Store the log probability of the selected action
-        # Reward will be appended by the parent
-        if not eval:
-            self.log_probs.append(torch.log(action_probs[action]))
-
         return action
 
     def play_one_episode(self, eval=False):
@@ -66,7 +62,9 @@ class REINFORCE(Agent):
             # Save the reward obtained. Log probabilities of the action was aleady saved
             # in the call to predict action
             if not eval:
+                self.actions.append(action)
                 self.rewards.append(reward)
+                self.observations.append(curr_state)
 
             curr_state = next_state
             total_steps += 1
@@ -80,8 +78,18 @@ class REINFORCE(Agent):
 
         # Calculate the discounted rewards and then the loss
         disc_rewards = self._get_discounted_rewards()
-        log_probs = torch.stack(self.log_probs)
 
+        # Need to calculate the log probabilities from the stored observations
+        actions_tensor = torch.tensor(self.actions, dtype=torch.long)               # Shape (batch, )
+        states_tensor = torch.tensor(self.observations, dtype=torch.float32)        # Shape (batch, observation_len)
+        scores_tensor = self.network(states_tensor)                                 # Shape (batch, n_actions)
+        probs_tensor = F.softmax(scores_tensor, dim=-1)                             # Shape (batch, n_actions)
+
+        # Now select the probabilities of the actions that we used in the episode
+        # Then calculate the log probabilities
+        actions_probs = torch.gather(probs_tensor, dim=1, index=actions_tensor.unsqueeze(1)).squeeze(1)
+
+        log_probs = torch.log(actions_probs)
         loss = (disc_rewards * log_probs).sum()
         loss = -loss            # We need to do a gradient ascent step
 
@@ -107,5 +115,6 @@ class REINFORCE(Agent):
 
     def _memory_reset(self):
         """ Clears the memory, i.e. rewards and log probabilities """
+        self.observations = []
+        self.actions = []
         self.rewards = []
-        self.log_probs = []

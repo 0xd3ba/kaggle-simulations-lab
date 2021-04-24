@@ -2,19 +2,20 @@
 
 import copy
 import numpy as np
-import torch
-import torch.nn.functional as F
 
 
 class SelfPlay:
     """ Base environment for self-play """
 
-    def __init__(self, n_agents=2, n_warmup=0):
+    def __init__(self, n_agents=2, n_warmup=0, delta=-1):
         """
         n_agents: Number of agents in the game (including our agent)
+        n_warmup: Number of warmup episodes
+        delta:    Probability of clone remaining the same during an update
         """
         self.our_index = 0                                  # Index of our agent
         self.n_agents = n_agents                            # Total number of agents in the game
+        self.delta = delta                                  # Probability of clone staying the same
         self.clones = [None for _ in range(self.n_agents)]  # Cloned models of our agent
         self.curr_obs = None                                # Current observation
         self.n_obs = None                                   # Number of components in the observation vector
@@ -23,11 +24,23 @@ class SelfPlay:
 
         self._set_warmup_counter()
 
-    def updateAgents(self, agent):
-        """ Responsible for updating the agents by cloning the provided model """
+    def setAgents(self, agent):
+        """ Responsible for setting the agents by cloning the provided model """
         self.clones = [copy.deepcopy(agent) if i != self.getOurAgentIndex() else None
                        for i in range(self.n_agents)
                        ]
+
+    def updateAgents(self, agent):
+        """ Responsible for updating the agents by cloning the provided model """
+        our_index = self.getOurAgentIndex()
+        for i in range(len(self.clones)):
+            if i == our_index:
+                continue
+
+            # Update the clone probabilistically by sampling a number from [0,1]
+            if np.random.uniform() > self.delta:
+                self.clones[i] = copy.deepcopy(agent)
+
 
     # *****************************************
     # Methods that the kaggle environment
