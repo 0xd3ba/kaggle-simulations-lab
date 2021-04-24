@@ -80,7 +80,7 @@ class HungryGeese(SelfPlay):
         self._update_board()
 
         game_over = self.env.done
-        we_lost = self.isAgentDone(our_index) and (not game_over or self._our_goose_died())
+        we_lost = self._our_goose_died()
 
         # We lose if our agent is DONE and one of the two conditions hold:
         #   - Game is not over yet

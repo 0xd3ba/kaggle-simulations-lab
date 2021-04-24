@@ -110,6 +110,10 @@ class Trainer:
             self.update_progress_bar(e)
             self.update_text_box_training(e)
 
+        # Training done -- Close the summary writer
+        if self.writer:
+            self.writer.close()
+
     def showdown(self, n_episodes):
         """ Perform a showdown of n_episodes against the opponents """
         n_wins = 0
@@ -159,7 +163,7 @@ class Trainer:
         log_dir = self.agent.get_log_directory()
         if log_dir is not None:
             self.can_log = True
-            self.writer = SummaryWriter(log_dir=log_dir)
+            self.writer = SummaryWriter(log_dir=log_dir, flush_secs=1)
 
 
     def logging_possible(self):

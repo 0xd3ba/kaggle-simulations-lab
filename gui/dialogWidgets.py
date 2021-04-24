@@ -37,6 +37,7 @@ DIALOG_TEXTBOX_STATS_HEADER = 'Performance Summary'
 # The command needs to be appended with the log-directory
 DIALOG_TENSORBOARD_LABEL = 'Execute the command on terminal to start TensorBoard server'
 DIALOG_TENSORBOARD_CMD = 'tensorboard --logdir '
+TENSORBOARD_FLAGS = ' --reload_interval 3'
 DIALOG_TENSORBOARD_PLACEHOLDER = 'Start training to get the command'
 DIALOG_TENSORBOARD_COPY = 'Copy Command'
 
@@ -182,6 +183,8 @@ class TrainingDialog(QDialog):
         trainer.Trainer.AVG_SHOWDOWN_STEPS_KEY: '--',
         trainer.Trainer.SHOWDOWN_KEY: '--',
     }
+
+    TRAINING_STATS_DEF = TRAINING_STATS.copy()
 
     def __init__(self, mainParent, config, *args, **kwargs):
         super().__init__(mainParent)
@@ -330,6 +333,7 @@ class TrainingDialog(QDialog):
         self.trainingInfoTextBox = QTextBrowser()
         self.trainingInfoTextBox.setOpenExternalLinks(True)
 
+        self.TRAINING_STATS = self.TRAINING_STATS_DEF.copy()
         self._write_performance_statistics()
 
         self.mainLayout.addWidget(self.trainingInfoTextBox, 2, 2, 1, 2)
@@ -415,7 +419,7 @@ class TrainingDialog(QDialog):
         """ Updates the command of the tensorboard on the GUI """
         workspace_dir = self.config[acfg.KEY_WORKSPACE]
         log_dir = os.path.join(workspace_dir, log_dir)
-        tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir
+        tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir + TENSORBOARD_FLAGS
 
         self.tboardCmd.setText(tboard_cmd)
 
