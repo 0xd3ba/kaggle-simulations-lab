@@ -41,6 +41,7 @@ DIALOG_TEXTBOX_TRAIN_CONFIG = 'Starting TensorBoard server ...'
 # The command needs to be appended with the log-directory
 DIALOG_TENSORBOARD_LABEL = 'Execute the command on terminal to start TensorBoard server'
 DIALOG_TENSORBOARD_CMD = 'tensorboard --logdir '
+DIALOG_TENSORBOARD_PLACEHOLDER = 'Start training to get the command'
 DIALOG_TENSORBOARD_COPY = 'Copy Command'
 
 # Constants for LayerConfigDialog
@@ -240,13 +241,10 @@ class TrainingDialog(QDialog):
 
     def createTensorBoardLinkBox(self):
         """ Creates the box that contains the tensorboard server link """
-        workspace_dir = self.config[acfg.KEY_WORKSPACE]
-        log_dir = os.path.join(workspace_dir, fprep.PrepareFolders.LOG_DIR)
-        tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir
 
         # For monospaced font in the command
         font = QFont()
-        font.setFamily("Monospace")
+        # font.setFamily("Monospace")
         font.setFixedPitch(True)
 
         # Create the widgets for label and the command
@@ -258,10 +256,8 @@ class TrainingDialog(QDialog):
 
         # Set the widget to be read-only and update the text with the tensorboard command
         self.tboardCmd.setReadOnly(True)
-        self.tboardCmd.setPlaceholderText(tboard_cmd)
+        self.tboardCmd.setPlaceholderText(DIALOG_TENSORBOARD_PLACEHOLDER)
         self.tboardCmd.setFont(font)
-
-        # TODO: Add a button for copying the link to clipboard
 
         # Finally add them to the main layout
         self.mainLayout.addWidget(self.tboardLabel, 0, 0, 1, 4)
@@ -332,6 +328,7 @@ class TrainingDialog(QDialog):
         self.worker_.signals.finished_signal.connect(self.thread_.quit)
         self.worker_.signals.finished_signal.connect(self.worker_.stop)
         self.worker_.signals.finished_signal.connect(self.trainingDone)
+        self.worker_.signals.tensorboard_signal.connect(self.tensorBoardCommandUpdate)
         self.worker_.signals.progress_signal.connect(self.progressBarUpdate)
         self.worker_.signals.textbox_signal.connect(self.trainingInfoUpdate)
 
@@ -359,6 +356,15 @@ class TrainingDialog(QDialog):
     def tensorBoardCopyCommand(self):
         """ Copies the provided command of tensorboard into clipboard """
         pyperclip.copy(self.tboardCmd.text())
+
+
+    def tensorBoardCommandUpdate(self, log_dir):
+        """ Updates the command of the tensorboard on the GUI """
+        workspace_dir = self.config[acfg.KEY_WORKSPACE]
+        log_dir = os.path.join(workspace_dir, log_dir)
+        tboard_cmd = DIALOG_TENSORBOARD_CMD + log_dir
+
+        self.tboardCmd.setText(tboard_cmd)
 
 
     def progressBarUpdate(self, percent):

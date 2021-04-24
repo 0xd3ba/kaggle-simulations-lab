@@ -91,8 +91,6 @@ class Trainer:
             avg_reward += total_reward
             avg_steps += total_steps
 
-        # TODO: There is a bug due to which in 1v1 matches, we are winning 100%, which is wrong
-        #       Reason is in `isAgentDone()` method. Check it later 
         win_rate = (n_wins / n_episodes) * 100
         avg_reward = avg_reward / n_episodes
         avg_steps = avg_steps / n_episodes

@@ -13,6 +13,7 @@ from utils.dispatcher import dispatcher
 class WorkerSignals(QObject):
     """ Signals for a running worker thread """
     finished_signal = pyqtSignal()          # Sent when execution of worker is done
+    tensorboard_signal = pyqtSignal(str)    # Sent when the directory is created and command needs to be updated
     progress_signal = pyqtSignal(float)     # Sent when the progress bar needs an update
     textbox_signal = pyqtSignal(dict)       # Sent when the training information textbox needs an update
 
@@ -42,6 +43,10 @@ class Worker(QObject):
     def update_textbox(self, data):
         """ Emits the signal that updates the textbox on the GUI """
         self.signals.textbox_signal.emit(data)
+
+    def update_tensorboard_cmd(self, log_dir):
+        """ Emits the signal that updates the tensorboard command on the GUI """
+        self.signals.tensorboard_signal.emit(log_dir)
 
     def run(self):
         """ Entry point of the thread. Control is passed to dispatcher with its reference """

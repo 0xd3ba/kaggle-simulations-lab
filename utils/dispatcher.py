@@ -29,6 +29,10 @@ def dispatcher(configData, worker):
     folder_prep = fprep.PrepareFolders(env_name=env_name, path=env_workspace)
     folder_prep.prepare()
 
+    # Update the tensorboard link on the GUI by sending a signal
+    if folder_prep.get_log_dir() is not None:
+        worker.update_tensorboard_cmd(folder_prep.get_log_dir())
+
     # Create the environment
     training_env = ecfg.ENV_MAP[env_name].getEnvironment()
     training_env = training_env(n_agents, n_warmup, splay_delta)
